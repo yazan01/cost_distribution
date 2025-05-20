@@ -36,7 +36,7 @@ def get_project_data(filters):
         	pro.name = pp.parent 
         WHERE 
         	pp.partner = %(partner_filter)s 
-            AND (%(project_filter)s IS NULL OR pp.parent IN %(project_ids)s)
+            AND (%(project_filter)s IS NULL OR pp.parent = %(project_ids)s)
             AND (%(project_type_filter)s IS NULL OR pro.project_type = %(project_type_filter)s)
             AND (%(portfolio_category_filter)s IS NULL OR pro.custom_portfolio_category = %(portfolio_category_filter)s)
     """, {
