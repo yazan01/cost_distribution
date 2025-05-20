@@ -1,0 +1,66 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"tadVY3ZSB-\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Cost Distribution Space</span>\",\"col\":12}},{\"id\":\"JphzQ_QEVs\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Cost Distribution\",\"col\":4}},{\"id\":\"pop4b5fSTR\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Cost Distribution Report\",\"col\":4}},{\"id\":\"k4KfWt_d6n\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Cost Distribution Settings\",\"col\":4}},{\"id\":\"7nSy7PcGe0\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"oVPVK_gSwA\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Cost Distribution Manual\",\"col\":4}},{\"id\":\"Or-f-tLv2b\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Cost Distribution Project\",\"col\":4}},{\"id\":\"nE9oQRSCsD\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Cost Distribution Employee\",\"col\":4}}]",
+ "creation": "2023-07-26 13:50:24.419059",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "dashboard-list",
+ "idx": 0,
+ "is_hidden": 0,
+ "label": "Cost Distribution Space",
+ "links": [],
+ "modified": "2023-08-14 18:11:52.372696",
+ "modified_by": "Administrator",
+ "module": "Cost Distribution",
+ "name": "Cost Distribution Space",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [
+  {
+   "document_type": "Cost Distribution",
+   "label": "Cost Distribution Manual",
+   "quick_list_filter": "{\"distribution_type\":[\"=\",\"Manual\"]}"
+  },
+  {
+   "document_type": "Cost Distribution",
+   "label": "Cost Distribution Project",
+   "quick_list_filter": "{\"distribution_type\":[\"=\",\"Project\"]}"
+  },
+  {
+   "document_type": "Cost Distribution",
+   "label": "Cost Distribution Employee",
+   "quick_list_filter": "{\"distribution_type\":[\"=\",\"Employee\"]}"
+  }
+ ],
+ "roles": [],
+ "sequence_id": 39.0,
+ "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "New",
+   "label": "New Cost Distribution",
+   "link_to": "Cost Distribution",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Cost Distribution Settings",
+   "link_to": "Cost Distribution Settings",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Cost Distribution Report",
+   "link_to": "Cost Distribution Report",
+   "type": "Report"
+  }
+ ],
+ "title": "Cost Distribution Space"
+}
