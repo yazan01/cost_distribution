@@ -1,7 +1,8 @@
 from collections import OrderedDict
-from datetime import datetime
 import frappe
 from frappe import _, _dict
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 def execute(filters):
     columns = [
@@ -22,7 +23,6 @@ def get_project_data(filters):
     project_type_filter = filters.get("project_type")
     portfolio_category_filter = filters.get("portfolio_category")
     view_filter = filters.get("view")
-    aggregated_filter = filters.get("aggregated")
 
     all_projects = frappe.db.sql("""
         SELECT 
@@ -44,7 +44,7 @@ def get_project_data(filters):
 
     if project_filter:
         all_projects = [p for p in all_projects if p["project_id"] == project_filter]
-
+    
     project_percentages = {p["project_id"]: float(p["percentage"] or 0) / 100 for p in all_projects}
     project_ids = list(project_percentages.keys())
 
@@ -106,12 +106,28 @@ def get_project_data(filters):
         ORDER BY gl.project, YEAR(gl.posting_date), MONTH(gl.posting_date)
     """, {"project_ids": project_ids, 'acc': '5%'}, as_dict=True)
 
-    # استخراج أقل تاريخ
-    all_dates = [d["month_year"] for d in financial_data + ctc_data + indirect_costs if d.get("month_year")]
-    parsed_dates = [datetime.strptime(date_str, "%m-%Y") for date_str in all_dates]
-    min_date = min(parsed_dates) if parsed_dates else None
-    min_date_str = min_date.strftime("%m-%Y") if min_date else None
+    # === إضافة الفترات الزمنية الكاملة ===
+    all_dates = set()
+    for d in financial_data + ctc_data + indirect_costs:
+        if "month_year" in d:
+            all_dates.add(d["month_year"])
 
+    def parse_month_year(s):
+        return datetime.strptime(s, "%m-%Y")
+
+    if not all_dates:
+        return []
+
+    min_date = min(parse_month_year(d) for d in all_dates)
+    max_date = max(parse_month_year(d) for d in all_dates)
+
+    all_periods = []
+    current = min_date
+    while current <= max_date:
+        all_periods.append(current.strftime("%m-%Y"))
+        current += relativedelta(months=1)
+
+    # تحضير النتائج حسب المشروع والفترة
     ctc_lookup = {(d["project_id"], d["month_year"]): d["ctc_cost"] for d in ctc_data}
     indirect_lookup = {(d["project_id"], d["month_year"]): d["indirect_cost"] for d in indirect_costs}
     
@@ -130,6 +146,7 @@ def get_project_data(filters):
         actual_cost = entry.get("actual_cost", 0.0)
         revenue = entry.get("revenue", 0.0)
 
+        # Apply partner's percentage share
         total_ctc *= percentage
         actual_cost *= percentage
         revenue *= percentage
@@ -145,35 +162,30 @@ def get_project_data(filters):
 
     aggregated_result = OrderedDict()
 
-    for (project_id, month_year), values in result.items():
-        period_key = month_year.split("-")[1] if view_filter == "Year" else month_year
+    for period_key in all_periods:
+        matching_entries = {
+            k: v for k, v in result.items()
+            if (period_key == k[1] if view_filter != "Year" else period_key == k[1].split("-")[1])
+        }
 
-        if period_key not in aggregated_result:
-            aggregated_result[period_key] = {
-                "period": period_key,
-                "total_ctc": 0.0,
-                "total_actual": 0.0,
-                "total_revenue": 0.0,
-                "profit_loss_ctc": 0.0,
-                "profit_loss_actual": 0.0,
-            }
+        aggregated_result[period_key] = {
+            "period": period_key,
+            "total_ctc": 0.0,
+            "total_actual": 0.0,
+            "total_revenue": 0.0,
+            "profit_loss_ctc": 0.0,
+            "profit_loss_actual": 0.0,
+        }
 
-        aggregated_result[period_key]["total_ctc"] += values["total_ctc"]
-        aggregated_result[period_key]["total_actual"] += values["total_actual"]
-        aggregated_result[period_key]["total_revenue"] += values["total_revenue"]
-        aggregated_result[period_key]["profit_loss_ctc"] += values["profit_loss_ctc"]
-        aggregated_result[period_key]["profit_loss_actual"] += values["profit_loss_actual"]
+        for values in matching_entries.values():
+            aggregated_result[period_key]["total_ctc"] += values["total_ctc"]
+            aggregated_result[period_key]["total_actual"] += values["total_actual"]
+            aggregated_result[period_key]["total_revenue"] += values["total_revenue"]
+            aggregated_result[period_key]["profit_loss_ctc"] += values["profit_loss_ctc"]
+            aggregated_result[period_key]["profit_loss_actual"] += values["profit_loss_actual"]
 
-    for item in aggregated_result.values():
+        # Round results
         for key in ["total_ctc", "total_actual", "total_revenue", "profit_loss_ctc", "profit_loss_actual"]:
-            item[key] = round(item[key], 2)
+            aggregated_result[period_key][key] = round(aggregated_result[period_key][key], 2)
 
-    sorted_data = sorted(
-        aggregated_result.values(),
-        key=lambda x: datetime.strptime(x["period"], "%m-%Y")
-    )
-
-    if min_date:
-        sorted_data = [row for row in sorted_data if datetime.strptime(row["period"], "%m-%Y") >= min_date]
-
-    return sorted_data
+    return list(aggregated_result.values())
