@@ -5,16 +5,13 @@ from frappe import _, _dict
 def execute(filters):
     columns = [
         {"label": "Period", "fieldname": "period", "fieldtype": "Data", "width": 120},
-        
         {"label": "CTC Cost", "fieldname": "total_ctc", "fieldtype": "Float", "width": 200},
         {"label": "Actual Cost", "fieldname": "total_actual", "fieldtype": "Float", "width": 200},
         {"label": "Revenue", "fieldname": "total_revenue", "fieldtype": "Float", "width": 200},
-
         {"label": "Profit AND Loss on CTC Cost", "fieldname": "profit_loss_ctc", "fieldtype": "Float", "width": 240},
         {"label": "Profit AND Loss on Actual Cost", "fieldname": "profit_loss_actual", "fieldtype": "Float", "width": 240},
     ]
 
-    
     data = get_project_data(filters)
     return columns, data
 
@@ -107,7 +104,7 @@ def get_project_data(filters):
         ORDER BY gl.project, YEAR(gl.posting_date), MONTH(gl.posting_date)
     """, {"project_ids": project_ids, 'acc': '5%'}, as_dict=True)
 
-    # التجميع الموحد لكل المفاتيح
+    # تجميع كل المفاتيح لتوحيد العرض
     all_keys = set()
     for d in financial_data:
         all_keys.add((d["project_id"], d["month_year"]))
@@ -172,6 +169,13 @@ def get_project_data(filters):
         for key in ["total_ctc", "total_actual", "total_revenue", "profit_loss_ctc", "profit_loss_actual"]:
             item[key] = round(item[key], 2)
 
-    return list(aggregated_result.values())
+    # ترتيب حسب الفترة
+    sorted_data = sorted(
+        aggregated_result.values(),
+        key=lambda x: (
+            int(x["period"]) if view_filter == "Year"
+            else (int(x["period"].split("-")[1]), int(x["period"].split("-")[0]))
+        )
+    )
 
-
+    return sorted_data
