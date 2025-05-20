@@ -85,8 +85,8 @@ def get_project_data(filters):
         JOIN `tabCTC Distribution` D ON S.parent = D.name
         WHERE 
             S.project IN %(project_ids)s 
-        GROUP BY S.project, YEAR(D.posting_date) , MONTH(D.posting_date)
-        ORDER BY S.project, YEAR(D.posting_date) , MONTH(D.posting_date)
+        GROUP BY S.project, YEAR(D.posting_date), MONTH(D.posting_date)
+        ORDER BY S.project, YEAR(D.posting_date), MONTH(D.posting_date)
     """, {"project_ids": project_ids}, as_dict=True)
 
     indirect_costs = frappe.db.sql("""
@@ -107,26 +107,33 @@ def get_project_data(filters):
         ORDER BY gl.project, YEAR(gl.posting_date), MONTH(gl.posting_date)
     """, {"project_ids": project_ids, 'acc': '5%'}, as_dict=True)
 
-    # Prepare dictionaries for easier lookup
+    # التجميع الموحد لكل المفاتيح
+    all_keys = set()
+    for d in financial_data:
+        all_keys.add((d["project_id"], d["month_year"]))
+    for d in ctc_data:
+        all_keys.add((d["project_id"], d["month_year"]))
+    for d in indirect_costs:
+        all_keys.add((d["project_id"], d["month_year"]))
+
+    financial_lookup = {(d["project_id"], d["month_year"]): d for d in financial_data}
     ctc_lookup = {(d["project_id"], d["month_year"]): d["ctc_cost"] for d in ctc_data}
     indirect_lookup = {(d["project_id"], d["month_year"]): d["indirect_cost"] for d in indirect_costs}
-    
+
     result = OrderedDict()
 
-    for entry in financial_data:
-        key = (entry["project_id"], entry["month_year"])
-        project_id = entry["project_id"]
-        month_year = entry["month_year"]
+    for key in sorted(all_keys):
+        project_id, month_year = key
         percentage = project_percentages.get(project_id, 0)
 
+        financial_entry = financial_lookup.get(key, {})
         ctc_cost = ctc_lookup.get(key, 0.0)
         indirect_cost = indirect_lookup.get(key, 0.0)
         total_ctc = ctc_cost + indirect_cost
 
-        actual_cost = entry.get("actual_cost", 0.0)
-        revenue = entry.get("revenue", 0.0)
+        actual_cost = financial_entry.get("actual_cost", 0.0)
+        revenue = financial_entry.get("revenue", 0.0)
 
-        # Apply partner's percentage share
         total_ctc *= percentage
         actual_cost *= percentage
         revenue *= percentage
@@ -140,14 +147,10 @@ def get_project_data(filters):
             "profit_loss_actual": round(revenue - actual_cost, 2),
         }
 
-    #return list(result.values())
     aggregated_result = OrderedDict()
 
     for (project_id, month_year), values in result.items():
-        if view_filter == "Year":
-            period_key = month_year.split("-")[1]  # Extract year
-        else:  # Default to Month view
-            period_key = month_year  # Keep MM-YYYY
+        period_key = month_year.split("-")[1] if view_filter == "Year" else month_year
 
         if period_key not in aggregated_result:
             aggregated_result[period_key] = {
@@ -165,10 +168,10 @@ def get_project_data(filters):
         aggregated_result[period_key]["profit_loss_ctc"] += values["profit_loss_ctc"]
         aggregated_result[period_key]["profit_loss_actual"] += values["profit_loss_actual"]
 
-    # Round the results
     for item in aggregated_result.values():
         for key in ["total_ctc", "total_actual", "total_revenue", "profit_loss_ctc", "profit_loss_actual"]:
             item[key] = round(item[key], 2)
 
     return list(aggregated_result.values())
+
 
