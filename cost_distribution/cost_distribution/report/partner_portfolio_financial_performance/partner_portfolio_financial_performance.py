@@ -1,18 +1,20 @@
 from collections import OrderedDict
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
 import frappe
 from frappe import _, _dict
 
 def execute(filters):
     columns = [
         {"label": "Period", "fieldname": "period", "fieldtype": "Data", "width": 120},
+        
         {"label": "CTC Cost", "fieldname": "total_ctc", "fieldtype": "Float", "width": 200},
         {"label": "Actual Cost", "fieldname": "total_actual", "fieldtype": "Float", "width": 200},
         {"label": "Revenue", "fieldname": "total_revenue", "fieldtype": "Float", "width": 200},
+
         {"label": "Profit AND Loss on CTC Cost", "fieldname": "profit_loss_ctc", "fieldtype": "Float", "width": 240},
         {"label": "Profit AND Loss on Actual Cost", "fieldname": "profit_loss_actual", "fieldtype": "Float", "width": 240},
     ]
+
+    
     data = get_project_data(filters)
     return columns, data
 
@@ -21,8 +23,9 @@ def get_project_data(filters):
     partner_filter = filters.get("partner")
     project_type_filter = filters.get("project_type")
     portfolio_category_filter = filters.get("portfolio_category")
-    view_filter = filters.get("view") or "Month"
-
+    view_filter = filters.get("view")
+    aggregated_filter = filters.get("aggregated")
+    
     all_projects = frappe.db.sql("""
         SELECT 
             pp.parent AS project_id,
@@ -43,7 +46,7 @@ def get_project_data(filters):
 
     if project_filter:
         all_projects = [p for p in all_projects if p["project_id"] == project_filter]
-
+    
     project_percentages = {p["project_id"]: float(p["percentage"] or 0) / 100 for p in all_projects}
     project_ids = list(project_percentages.keys())
 
@@ -95,7 +98,6 @@ def get_project_data(filters):
         JOIN `tabGL Entry` AS gl ON afc.account = gl.account 
         WHERE 
             gl.project IN %(project_ids)s 
-            AND YEAR(gl.posting_date) IN (2023, 2024, 2025)
             AND afc.type = 'Indirect' 
             AND gl.docstatus = 1 
             AND gl.is_cancelled = 0 
@@ -105,83 +107,68 @@ def get_project_data(filters):
         ORDER BY gl.project, YEAR(gl.posting_date), MONTH(gl.posting_date)
     """, {"project_ids": project_ids, 'acc': '5%'}, as_dict=True)
 
-    def parse_month_year(s):
-        return datetime.strptime(s, "%m-%Y")
-
-    # === استخراج كل التواريخ لتحديد الفترة الزمنية ===
-    all_dates = set()
-    for d in financial_data + ctc_data + indirect_costs:
-        if "month_year" in d:
-            all_dates.add(d["month_year"])
-
-    if not all_dates:
-        return []
-
-    min_date = min(parse_month_year(d) for d in all_dates)
-    max_date = max(parse_month_year(d) for d in all_dates)
-
-    all_periods = []
-    current = min_date
-    while current <= max_date:
-        if view_filter == "Year":
-            period_label = current.strftime("%Y")
-        else:
-            period_label = current.strftime("%m-%Y")
-        all_periods.append(period_label)
-        current += relativedelta(months=1)
-
-    data_map = {}
+    # Prepare dictionaries for easier lookup
+    ctc_lookup = {(d["project_id"], d["month_year"]): d["ctc_cost"] for d in ctc_data}
+    indirect_lookup = {(d["project_id"], d["month_year"]): d["indirect_cost"] for d in indirect_costs}
+    
+    result = OrderedDict()
 
     for entry in financial_data:
-        period = entry["month_year"]
-        if view_filter == "Year":
-            period = period.split("-")[1]
-        key = (entry["project_id"], period)
-        data_map.setdefault(key, {"actual": 0.0, "revenue": 0.0})
-        data_map[key]["actual"] += entry["actual_cost"] * project_percentages.get(entry["project_id"], 0)
-        data_map[key]["revenue"] += entry["revenue"] * project_percentages.get(entry["project_id"], 0)
+        key = (entry["project_id"], entry["month_year"])
+        project_id = entry["project_id"]
+        month_year = entry["month_year"]
+        percentage = project_percentages.get(project_id, 0)
 
-    for entry in ctc_data:
-        period = entry["month_year"]
-        if view_filter == "Year":
-            period = period.split("-")[1]
-        key = (entry["project_id"], period)
-        data_map.setdefault(key, {})
-        data_map[key]["ctc"] = entry["ctc_cost"] * project_percentages.get(entry["project_id"], 0)
+        ctc_cost = ctc_lookup.get(key, 0.0)
+        indirect_cost = indirect_lookup.get(key, 0.0)
+        total_ctc = ctc_cost + indirect_cost
 
-    for entry in indirect_costs:
-        period = entry["month_year"]
-        if view_filter == "Year":
-            period = period.split("-")[1]
-        key = (entry["project_id"], period)
-        data_map.setdefault(key, {})
-        if "ctc" not in data_map[key]:
-            data_map[key]["ctc"] = 0.0
-        data_map[key]["ctc"] += entry["indirect_cost"] * project_percentages.get(entry["project_id"], 0)
+        actual_cost = entry.get("actual_cost", 0.0)
+        revenue = entry.get("revenue", 0.0)
 
-    aggregated = OrderedDict()
-    for (proj_id, period), values in data_map.items():
-        if period not in aggregated:
-            aggregated[period] = {
-                "period": period,
+        # Apply partner's percentage share
+        total_ctc *= percentage
+        actual_cost *= percentage
+        revenue *= percentage
+
+        result[key] = {
+            "period": month_year,
+            "total_ctc": round(total_ctc, 2),
+            "total_actual": round(actual_cost, 2),
+            "total_revenue": round(revenue, 2),
+            "profit_loss_ctc": round(revenue - total_ctc, 2),
+            "profit_loss_actual": round(revenue - actual_cost, 2),
+        }
+
+    #return list(result.values())
+    aggregated_result = OrderedDict()
+
+    for (project_id, month_year), values in result.items():
+        if view_filter == "Year":
+            period_key = month_year.split("-")[1]  # Extract year
+        else:  # Default to Month view
+            period_key = month_year  # Keep MM-YYYY
+
+        if period_key not in aggregated_result:
+            aggregated_result[period_key] = {
+                "period": period_key,
                 "total_ctc": 0.0,
                 "total_actual": 0.0,
                 "total_revenue": 0.0,
                 "profit_loss_ctc": 0.0,
                 "profit_loss_actual": 0.0,
             }
-        aggregated[period]["total_ctc"] += values.get("ctc", 0.0)
-        aggregated[period]["total_actual"] += values.get("actual", 0.0)
-        aggregated[period]["total_revenue"] += values.get("revenue", 0.0)
 
-    for row in aggregated.values():
-        row["profit_loss_ctc"] = round(row["total_revenue"] - row["total_ctc"], 2)
-        row["profit_loss_actual"] = round(row["total_revenue"] - row["total_actual"], 2)
-        row["total_ctc"] = round(row["total_ctc"], 2)
-        row["total_actual"] = round(row["total_actual"], 2)
-        row["total_revenue"] = round(row["total_revenue"], 2)
+        aggregated_result[period_key]["total_ctc"] += values["total_ctc"]
+        aggregated_result[period_key]["total_actual"] += values["total_actual"]
+        aggregated_result[period_key]["total_revenue"] += values["total_revenue"]
+        aggregated_result[period_key]["profit_loss_ctc"] += values["profit_loss_ctc"]
+        aggregated_result[period_key]["profit_loss_actual"] += values["profit_loss_actual"]
 
-    return sorted(
-        aggregated.values(),
-        key=lambda x: parse_month_year("01-" + x["period"]) if view_filter == "Year" else parse_month_year(x["period"])
-    )
+    # Round the results
+    for item in aggregated_result.values():
+        for key in ["total_ctc", "total_actual", "total_revenue", "profit_loss_ctc", "profit_loss_actual"]:
+            item[key] = round(item[key], 2)
+
+    return list(aggregated_result.values())
+
