@@ -1,0 +1,202 @@
+{
+    "actions": [],
+    "allow_rename": 1,
+    "autoname": "naming_series:",
+    "creation": "2024-11-05 15:18:05.070741",
+    "default_view": "List",
+    "doctype": "DocType",
+    "editable_grid": 1,
+    "engine": "InnoDB",
+    "field_order": [
+     "naming_series",
+     "timesheet_section",
+     "distribution_type",
+     "section_break_bchsc1",
+     "company",
+     "column_break_feyrr",
+     "from_date",
+     "to_date",  
+     "section_break_bchsc",
+     "employee_ctc_data",
+     "add_project_for_employee_no_timesheet",
+     "costing_summary",  
+     "employee_with_no_timesheet",    
+     "section_break_orgdc",
+     "posting_date",
+     "amount",
+     "amended_from",
+     "journal_entry_tab",
+     "journal_entry",
+     "jv_frame"
+    ],
+    "fields": [
+     {
+      "fieldname": "naming_series",
+      "fieldtype": "Select",
+      "label": "Series",
+      "options": "CTC-DIST-"
+     },
+     {
+      "fieldname": "timesheet_section",
+      "fieldtype": "Section Break",
+      "label": "Timesheet Cost"
+     },
+     {
+      "default": "CTC Distribution",
+      "fieldname": "distribution_type",
+      "fieldtype": "Select",
+      "in_list_view": 1,
+      "label": "Distribution Type",
+      "options": "\nCTC Distribution",
+      "read_only": 1,
+      "read_only_depends_on": "eval:doc.distribution_type == \"CTC Distribution\" || doc.journal_entry",
+      "reqd": 1
+     }, 
+     {
+      "fieldname": "section_break_bchsc1",
+      "fieldtype": "Section Break"
+     },
+     {
+      "fieldname": "company",
+      "fieldtype": "Link",
+      "in_list_view": 1,
+      "label": "Company",
+      "options": "Company",
+      "reqd": 1    
+     },
+     {
+      "fieldname": "column_break_feyrr",
+      "fieldtype": "Column Break"
+     },  
+     {
+      "fieldname": "from_date",
+      "fieldtype": "Date",
+      "label": "From Date",
+      "reqd": 1
+     },
+     {
+      "fieldname": "to_date",
+      "fieldtype": "Date",
+      "label": "To Date",
+      "reqd": 1
+     },
+     {
+      "fieldname": "section_break_bchsc",
+      "fieldtype": "Section Break"
+     },
+     {
+      "fieldname": "employee_ctc_data",
+      "fieldtype": "Table",
+      "label": "Employee CTC Data",
+      "no_copy": 1,
+      "options": "Employee Cost Table CTC",
+      "read_only": 1
+     },
+     {
+      "fieldname": "add_project_for_employee_no_timesheet",
+      "fieldtype": "Table",
+      "label": "Add Project For Employee No Timesheet",
+      "options": "CTC Employee Timesheet"
+     },
+     {
+      "fieldname": "costing_summary",
+      "fieldtype": "Table",
+      "label": "Costing Summary",
+      "no_copy": 1,
+      "options": "Project Summary CTC",
+      "read_only_depends_on": "eval: ['Employee', 'CTC Distribution'].includes(doc.distribution_type) || doc.journal_entry"
+     },
+     {
+      "fieldname": "employee_with_no_timesheet",
+      "fieldtype": "Table MultiSelect",
+      "label": "Employee with no Timesheet",
+      "options": "Employee without Timesheet",
+      "read_only": 1
+     },
+     {
+      "fieldname": "section_break_orgdc",
+      "fieldtype": "Section Break"
+     },     
+     {
+      "fieldname": "posting_date",
+      "fieldtype": "Date",
+      "label": "Posting Date",
+      "read_only": 1
+     },
+     {
+      "fieldname": "amount",
+      "fieldtype": "Float",
+      "label": "Amount",
+      "no_copy": 1,
+      "read_only_depends_on": "eval: ['Employee', 'CTC Distribution'].includes(doc.distribution_type)"
+     },
+     {
+      "fieldname": "amended_from",
+      "fieldtype": "Link",
+      "label": "Amended From",
+      "no_copy": 1,
+      "options": "Cost Distribution",
+      "print_hide": 1,
+      "read_only": 1
+     },
+     {
+      "depends_on": "eval: doc.journal_entry",
+      "fieldname": "journal_entry_tab",
+      "fieldtype": "Tab Break",
+      "label": "Journal Entry Tab"
+     },
+     {
+      "fieldname": "journal_entry",
+      "fieldtype": "Link",
+      "label": "Journal Entry",
+      "no_copy": 1,
+      "options": "Journal Entry",
+      "read_only": 1,
+      "unique": 1
+     },
+     {
+      "fieldname": "jv_frame",
+      "fieldtype": "HTML",
+      "label": "JV Frame"
+     },
+     {
+      "fieldname": "amended_from",
+      "fieldtype": "Link",
+      "label": "Amended From",
+      "no_copy": 1,
+      "options": "Cost Distribution",
+      "print_hide": 1,
+      "read_only": 1
+     }
+    ],
+    "index_web_pages_for_search": 1,
+    "is_submittable": 1,
+    "links": [],
+    "modified": "2024-11-06 13:59:46.376822",
+    "modified_by": "Administrator",
+    "module": "Cost Distribution",
+    "name": "CTC Distribution",
+    "naming_rule": "By \"Naming Series\" field",
+    "owner": "Administrator",
+    "permissions": [
+     {
+      "amend": 1,
+      "cancel": 1,
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "System Manager",
+      "select": 1,
+      "share": 1,
+      "submit": 1,
+      "write": 1
+     }
+    ],
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": []
+   }

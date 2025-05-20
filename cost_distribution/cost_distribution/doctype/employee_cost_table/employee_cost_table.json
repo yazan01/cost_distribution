@@ -1,0 +1,96 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2023-08-27 21:46:37.163852",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "employee_name",
+  "total_hours",
+  "column_break_jesp1",
+  "salary_slip",
+  "payment_days",
+  "rate_per_hour",
+  "column_break_pha4k",
+  "gross_pay",
+  "gosi_amount",
+  "total_pay"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Employee",
+   "options": "Employee"
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name"
+  },
+  {
+   "fieldname": "rate_per_hour",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Rate Per Hour"
+  },
+  {
+   "fieldname": "total_hours",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Total Hours"
+  },
+  {
+   "fieldname": "salary_slip",
+   "fieldtype": "Link",
+   "label": "Salary Slip",
+   "options": "Salary Slip"
+  },
+  {
+   "fieldname": "payment_days",
+   "fieldtype": "Float",
+   "label": "Payment Days"
+  },
+  {
+   "fieldname": "column_break_jesp1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_pha4k",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "gosi_amount",
+   "fieldtype": "Float",
+   "label": "GOSI Amount"
+  },
+  {
+   "fieldname": "total_pay",
+   "fieldtype": "Float",
+   "label": "Total Pay"
+  },
+  {
+   "fieldname": "gross_pay",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Gross Pay"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-03-04 12:30:28.040141",
+ "modified_by": "Administrator",
+ "module": "Cost Distribution",
+ "name": "Employee Cost Table",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
