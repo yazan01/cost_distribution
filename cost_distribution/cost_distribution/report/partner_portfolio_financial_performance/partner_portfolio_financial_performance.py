@@ -10,8 +10,8 @@ def execute(filters):
         {"label": "Actual Cost", "fieldname": "total_actual", "fieldtype": "Float", "width": 200},
         {"label": "Revenue", "fieldname": "total_revenue", "fieldtype": "Float", "width": 200},
 
-        {"label": "Profit AND Loss on CTC Cost", "fieldname": "profit_loss_ctc", "fieldtype": "Float", "width": 200},
-        {"label": "Profit AND Loss on Actual Cost", "fieldname": "profit_loss_actual", "fieldtype": "Float", "width": 200},
+        {"label": "Profit AND Loss on CTC Cost", "fieldname": "profit_loss_ctc", "fieldtype": "Float", "width": 250},
+        {"label": "Profit AND Loss on Actual Cost", "fieldname": "profit_loss_actual", "fieldtype": "Float", "width": 250},
     ]
 
     
@@ -23,7 +23,9 @@ def get_project_data(filters):
     partner_filter = filters.get("partner")
     project_type_filter = filters.get("project_type")
     portfolio_category_filter = filters.get("portfolio_category")
-
+    view_filter = filters.get("view")
+    aggregated_filter = filters.get("aggregated")
+    
     all_projects = frappe.db.sql("""
         SELECT 
             pp.parent AS project_id,
@@ -139,4 +141,35 @@ def get_project_data(filters):
             "profit_loss_actual": round(revenue - actual_cost, 2),
         }
 
-    return list(result.values())
+    #return list(result.values())
+    aggregated_result = OrderedDict()
+
+    for (project_id, month_year), values in result.items():
+        if view_filter == "Year":
+            period_key = month_year.split("-")[1]  # Extract year
+        else:  # Default to Month view
+            period_key = month_year  # Keep MM-YYYY
+
+        if period_key not in aggregated_result:
+            aggregated_result[period_key] = {
+                "period": period_key,
+                "total_ctc": 0.0,
+                "total_actual": 0.0,
+                "total_revenue": 0.0,
+                "profit_loss_ctc": 0.0,
+                "profit_loss_actual": 0.0,
+            }
+
+        aggregated_result[period_key]["total_ctc"] += values["total_ctc"]
+        aggregated_result[period_key]["total_actual"] += values["total_actual"]
+        aggregated_result[period_key]["total_revenue"] += values["total_revenue"]
+        aggregated_result[period_key]["profit_loss_ctc"] += values["profit_loss_ctc"]
+        aggregated_result[period_key]["profit_loss_actual"] += values["profit_loss_actual"]
+
+    # Round the results
+    for item in aggregated_result.values():
+        for key in ["total_ctc", "total_actual", "total_revenue", "profit_loss_ctc", "profit_loss_actual"]:
+            item[key] = round(item[key], 2)
+
+    return list(aggregated_result.values())
+
