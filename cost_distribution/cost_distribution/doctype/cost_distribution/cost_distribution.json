@@ -1,0 +1,306 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2023-07-25 15:50:30.713472",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "timesheet_section",
+  "distribution_type",
+  "employee",
+  "employee_name",
+  "salary_slip",
+  "fiscal_year",
+  "from_date",
+  "to_date",
+  "column_break_feyrr",
+  "distribution",
+  "year",
+  "payroll_entry",
+  "month",
+  "section_break_bchsc",
+  "employee_salary_data",
+  "costing_summary",
+  "employee_with_no_timesheet",
+  "section_break_orgdc",
+  "debit_account",
+  "credit_account",
+  "gosi_debit_account",
+  "default_cost_center",
+  "column_break_tnyrs",
+  "company",
+  "posting_date",
+  "amount",
+  "amended_from",
+  "section_break_zrn5m",
+  "journal_entry_tab",
+  "journal_entry",
+  "jv_frame"
+ ],
+ "fields": [
+  {
+   "depends_on": "eval: doc.distribution_type == 'Employee'",
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Employee",
+   "mandatory_depends_on": "eval: doc.distribution_type == 'Employee'",
+   "no_copy": 1,
+   "options": "Employee",
+   "read_only_depends_on": "eval: doc.journal_entry"
+  },
+  {
+   "fieldname": "column_break_feyrr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval: ['Employee', 'All Employee'].includes(doc.distribution_type)",
+   "fieldname": "distribution",
+   "fieldtype": "Select",
+   "label": "Distribution",
+   "no_copy": 1,
+   "options": "Monthly"
+  },
+  {
+   "fieldname": "section_break_bchsc",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "costing_summary",
+   "fieldtype": "Table",
+   "label": "Costing Summary",
+   "no_copy": 1,
+   "options": "Project Summary",
+   "read_only_depends_on": "eval: ['Employee', 'All Employee'].includes(doc.distribution_type) || doc.journal_entry"
+  },
+  {
+   "fieldname": "section_break_orgdc",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "debit_account",
+   "fieldtype": "Link",
+   "label": "Debit Account",
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "fieldname": "credit_account",
+   "fieldtype": "Link",
+   "label": "Credit Account",
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_tnyrs",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date",
+   "no_copy": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "COST-DIST-"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Cost Distribution",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "timesheet_section",
+   "fieldtype": "Section Break",
+   "label": "Timesheet Cost"
+  },
+  {
+   "depends_on": "eval: ['Employee', 'All Employee'].includes(doc.distribution_type)",
+   "fieldname": "month",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Month",
+   "no_copy": 1,
+   "options": "\nJanuary\nFebruary\nMarch\nApril\nMay\nJune\nJuly\nAugust\nSeptember\nOctober\nNovember\nDecember",
+   "read_only_depends_on": "eval: doc.journal_entry"
+  },
+  {
+   "depends_on": "eval:doc.distribution == \"Yearly\"",
+   "fieldname": "fiscal_year",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Fiscal Year",
+   "no_copy": 1,
+   "options": "Fiscal Year"
+  },
+  {
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "hidden": 1,
+   "label": "From Date",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "hidden": 1,
+   "label": "To Date",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "All Employee",
+   "fieldname": "distribution_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Distribution Type",
+   "options": "\nAll Employee",
+   "read_only": 1,
+   "read_only_depends_on": "eval: doc.journal_entry",
+   "reqd": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Float",
+   "label": "Amount",
+   "no_copy": 1,
+   "read_only_depends_on": "eval: ['Employee', 'All Employee'].includes(doc.distribution_type)"
+  },
+  {
+   "fieldname": "section_break_zrn5m",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "journal_entry",
+   "fieldtype": "Link",
+   "label": "Journal Entry",
+   "no_copy": 1,
+   "options": "Journal Entry",
+   "read_only": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval: doc.journal_entry",
+   "fieldname": "journal_entry_tab",
+   "fieldtype": "Tab Break",
+   "label": "Journal Entry Tab"
+  },
+  {
+   "fieldname": "jv_frame",
+   "fieldtype": "HTML",
+   "label": "JV Frame"
+  },
+  {
+   "depends_on": "eval: doc.employee",
+   "fieldname": "salary_slip",
+   "fieldtype": "Link",
+   "label": "Salary Slip",
+   "no_copy": 1,
+   "options": "Salary Slip",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.distribution_type == 'Employee'",
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "Employee Name",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "employee_salary_data",
+   "fieldtype": "Table",
+   "label": "Employee Salary Data",
+   "no_copy": 1,
+   "options": "Employee Cost Table",
+   "read_only": 1
+  },
+  {
+   "fieldname": "default_cost_center",
+   "fieldtype": "Link",
+   "label": "Default Cost Center",
+   "options": "Cost Center",
+   "reqd": 1
+  },
+  {
+   "fieldname": "gosi_debit_account",
+   "fieldtype": "Link",
+   "label": "GOSI Debit Account",
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval: ['Employee', 'All Employee'].includes(doc.distribution_type)",
+   "fieldname": "year",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Year",
+   "options": "Fiscal Year",
+   "read_only_depends_on": "eval: doc.journal_entry"
+  },
+  {
+   "fieldname": "employee_with_no_timesheet",
+   "fieldtype": "Table MultiSelect",
+   "label": "Employee with no Timesheet",
+   "options": "Employee without Timesheet",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payroll_entry",
+   "fieldtype": "Link",
+   "label": "Payroll Entry",
+   "options": "Payroll Entry"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2024-03-07 11:28:36.876698",
+ "modified_by": "Administrator",
+ "module": "Cost Distribution",
+ "name": "Cost Distribution",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "select": 1,
+   "set_user_permissions": 1,
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+} 
