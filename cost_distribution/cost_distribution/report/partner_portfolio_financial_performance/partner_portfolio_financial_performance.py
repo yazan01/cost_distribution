@@ -1,20 +1,18 @@
 from collections import OrderedDict
+from datetime import datetime
 import frappe
 from frappe import _, _dict
 
 def execute(filters):
     columns = [
         {"label": "Period", "fieldname": "period", "fieldtype": "Data", "width": 120},
-        
         {"label": "CTC Cost", "fieldname": "total_ctc", "fieldtype": "Float", "width": 200},
         {"label": "Actual Cost", "fieldname": "total_actual", "fieldtype": "Float", "width": 200},
         {"label": "Revenue", "fieldname": "total_revenue", "fieldtype": "Float", "width": 200},
-
-        {"label": "Profit AND Loss on CTC Cost", "fieldname": "profit_loss_ctc", "fieldtype": "Float", "width": 250},
-        {"label": "Profit AND Loss on Actual Cost", "fieldname": "profit_loss_actual", "fieldtype": "Float", "width": 250},
+        {"label": "Profit AND Loss on CTC Cost", "fieldname": "profit_loss_ctc", "fieldtype": "Float", "width": 240},
+        {"label": "Profit AND Loss on Actual Cost", "fieldname": "profit_loss_actual", "fieldtype": "Float", "width": 240},
     ]
 
-    
     data = get_project_data(filters)
     return columns, data
 
@@ -25,7 +23,7 @@ def get_project_data(filters):
     portfolio_category_filter = filters.get("portfolio_category")
     view_filter = filters.get("view")
     aggregated_filter = filters.get("aggregated")
-    
+
     all_projects = frappe.db.sql("""
         SELECT 
             pp.parent AS project_id,
@@ -46,7 +44,7 @@ def get_project_data(filters):
 
     if project_filter:
         all_projects = [p for p in all_projects if p["project_id"] == project_filter]
-    
+
     project_percentages = {p["project_id"]: float(p["percentage"] or 0) / 100 for p in all_projects}
     project_ids = list(project_percentages.keys())
 
@@ -85,8 +83,8 @@ def get_project_data(filters):
         JOIN `tabCTC Distribution` D ON S.parent = D.name
         WHERE 
             S.project IN %(project_ids)s 
-        GROUP BY S.project, YEAR(D.posting_date) , MONTH(D.posting_date)
-        ORDER BY S.project, YEAR(D.posting_date) , MONTH(D.posting_date)
+        GROUP BY S.project, YEAR(D.posting_date), MONTH(D.posting_date)
+        ORDER BY S.project, YEAR(D.posting_date), MONTH(D.posting_date)
     """, {"project_ids": project_ids}, as_dict=True)
 
     indirect_costs = frappe.db.sql("""
@@ -108,7 +106,12 @@ def get_project_data(filters):
         ORDER BY gl.project, YEAR(gl.posting_date), MONTH(gl.posting_date)
     """, {"project_ids": project_ids, 'acc': '5%'}, as_dict=True)
 
-    # Prepare dictionaries for easier lookup
+    # استخراج أقل تاريخ
+    all_dates = [d["month_year"] for d in financial_data + ctc_data + indirect_costs if d.get("month_year")]
+    parsed_dates = [datetime.strptime(date_str, "%m-%Y") for date_str in all_dates]
+    min_date = min(parsed_dates) if parsed_dates else None
+    min_date_str = min_date.strftime("%m-%Y") if min_date else None
+
     ctc_lookup = {(d["project_id"], d["month_year"]): d["ctc_cost"] for d in ctc_data}
     indirect_lookup = {(d["project_id"], d["month_year"]): d["indirect_cost"] for d in indirect_costs}
     
@@ -127,7 +130,6 @@ def get_project_data(filters):
         actual_cost = entry.get("actual_cost", 0.0)
         revenue = entry.get("revenue", 0.0)
 
-        # Apply partner's percentage share
         total_ctc *= percentage
         actual_cost *= percentage
         revenue *= percentage
@@ -141,14 +143,10 @@ def get_project_data(filters):
             "profit_loss_actual": round(revenue - actual_cost, 2),
         }
 
-    #return list(result.values())
     aggregated_result = OrderedDict()
 
     for (project_id, month_year), values in result.items():
-        if view_filter == "Year":
-            period_key = month_year.split("-")[1]  # Extract year
-        else:  # Default to Month view
-            period_key = month_year  # Keep MM-YYYY
+        period_key = month_year.split("-")[1] if view_filter == "Year" else month_year
 
         if period_key not in aggregated_result:
             aggregated_result[period_key] = {
@@ -166,10 +164,16 @@ def get_project_data(filters):
         aggregated_result[period_key]["profit_loss_ctc"] += values["profit_loss_ctc"]
         aggregated_result[period_key]["profit_loss_actual"] += values["profit_loss_actual"]
 
-    # Round the results
     for item in aggregated_result.values():
         for key in ["total_ctc", "total_actual", "total_revenue", "profit_loss_ctc", "profit_loss_actual"]:
             item[key] = round(item[key], 2)
 
-    return list(aggregated_result.values())
+    sorted_data = sorted(
+        aggregated_result.values(),
+        key=lambda x: datetime.strptime(x["period"], "%m-%Y")
+    )
 
+    if min_date:
+        sorted_data = [row for row in sorted_data if datetime.strptime(row["period"], "%m-%Y") >= min_date]
+
+    return sorted_data
