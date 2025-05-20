@@ -1,0 +1,59 @@
+{
+ "add_total_row": 1,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [
+   {
+     "fieldname": "project",
+     "label": "Project",
+     "fieldtype": "Link",
+     "options": "Project",
+     "reqd": 1
+   },
+   {
+     "fieldname": "data_type",
+     "label": "Data Type",
+     "fieldtype": "Select",
+     "options": "\nCTC\nActual Cost\nRevenue\nProfit Loss CTC\nProfit Loss Actual",
+     "default": "",
+     "reqd": 0
+   },
+   {
+     "fieldname": "from_date",
+     "label": "From Date",
+     "fieldtype": "Date",
+     "reqd": 0
+   },
+   {
+     "fieldname": "to_date",
+     "label": "To Date",
+     "fieldtype": "Date",
+     "reqd": 0
+   }
+ ],
+ "idx": 0,
+ "is_standard": "Yes",
+ "letter_head": "",
+ "modified": "2025-04-10 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Cost Distribution",
+ "name": "Project Financial Details",
+ "owner": "Administrator",
+ "ref_doctype": "GL Entry",
+ "report_name": "Project Financial Details",
+ "report_type": "Script Report",
+ "roles": [
+  {
+   "role": "Accounts User"
+  },
+  {
+   "role": "Accounts Manager"
+  },
+  {
+   "role": "CEO"
+  },
+  {
+   "role": "Projects Manager"
+  }
+ ]
+}
