@@ -24,30 +24,32 @@ def get_project_data(filters):
     project_type_filter = filters.get("project_type")
     portfolio_category_filter = filters.get("portfolio_category")
 
-    projects = frappe.db.sql("""
-       SELECT 
-        	pp.parent AS project_id,
-        	pp.percentage AS percentage
+    all_projects = frappe.db.sql("""
+        SELECT 
+            pp.parent AS project_id,
+            pp.percentage AS percentage
         FROM 
-        	`tabPartners Percentage` AS pp 
+            `tabPartners Percentage` AS pp 
         JOIN 
-        	`tabProject` AS pro 
-        ON 
-        	pro.name = pp.parent 
+            `tabProject` AS pro ON pro.name = pp.parent 
         WHERE 
-        	pp.partner = %(partner_filter)s 
-            AND (%(project_filter)s IS NULL OR pp.parent = %(project_ids)s)
+            pp.partner = %(partner_filter)s
             AND (%(project_type_filter)s IS NULL OR pro.project_type = %(project_type_filter)s)
             AND (%(portfolio_category_filter)s IS NULL OR pro.custom_portfolio_category = %(portfolio_category_filter)s)
     """, {
-        "project_filter": project_filter,
         "partner_filter": partner_filter,
         "project_type_filter": project_type_filter,
         "portfolio_category_filter": portfolio_category_filter
     }, as_dict=True)
 
-    project_percentages = {p["project_id"]: float(p["percentage"] or 0) / 100 for p in projects}
+    if project_filter:
+        all_projects = [p for p in all_projects if p["project_id"] == project_filter]
+    
+    project_percentages = {p["project_id"]: float(p["percentage"] or 0) / 100 for p in all_projects}
     project_ids = list(project_percentages.keys())
+
+    if not project_ids:
+        return []
 
     financial_data = frappe.db.sql("""
         SELECT 
