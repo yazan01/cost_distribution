@@ -22,7 +22,7 @@ frappe.query_reports["Partner portfolio Financial Performance"] = {
         {
             "fieldname": "project",
             "label": ("Project"),
-            "fieldtype": "Table MultiSelect",
+            "fieldtype": "Link",
             "options": "Project"
         },
         {
