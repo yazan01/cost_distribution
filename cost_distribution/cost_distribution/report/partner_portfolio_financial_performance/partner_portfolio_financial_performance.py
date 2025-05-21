@@ -38,6 +38,7 @@ def get_project_data(filters):
             AND (%(portfolio_category_filter)s IS NULL OR pro.custom_portfolio_category = %(portfolio_category_filter)s)
     """, {
         "partner_filter": partner_filter,
+        "project_filter": project_filter,
         "project_type_filter": project_type_filter,
         "portfolio_category_filter": portfolio_category_filter
     }, as_dict=True)
