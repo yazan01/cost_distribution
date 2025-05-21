@@ -1,4 +1,4 @@
-frappe.query_reports["Partner Portfolio Financial Performance"] = {
+frappe.query_reports["Partner portfolio Financial Performance"] = {
     "filters": [
         {
             "fieldname": "partner",
