@@ -38,25 +38,13 @@ frappe.query_reports["Partner portfolio Financial Performance"] = {
                 }
         
                 return frappe.call({
-                    method: "frappe.client.get_list",
+                    method: "path.to.your.report_file.get_projects_by_partner",  // عدّل المسار حسب موقع تقريرك
                     args: {
-                        doctype: "Partners Percentage",
-                        fields: ["parent"],
-                        filters: {
-                            partner: partner,
-                            parent: ["like", "%" + txt + "%"]
-                        },
-                        limit_page_length: 50
+                        partner: partner,
+                        txt: txt || ""
                     },
-                    callback: function(r) {
-                        if (r.message) {
-                            const options = r.message.map(d => ({
-                                value: d.parent,
-                                description: d.parent
-                            }));
-                            frappe.query_report.set_filter_options("project", options);
-                        }
-                    }
+                }).then(r => {
+                    return r.message;
                 });
             }
         },
