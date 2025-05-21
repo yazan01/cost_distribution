@@ -178,4 +178,24 @@ def get_project_data(filters):
         )
     )
 
+    if aggregated_filter:
+        cumulative_ctc = 0.0
+        cumulative_actual = 0.0
+        cumulative_revenue = 0.0
+        cumulative_profit_ctc = 0.0
+        cumulative_profit_actual = 0.0
+
+        for item in sorted_data:
+            cumulative_ctc += item["total_ctc"]
+            cumulative_actual += item["total_actual"]
+            cumulative_revenue += item["total_revenue"]
+            cumulative_profit_ctc += item["profit_loss_ctc"]
+            cumulative_profit_actual += item["profit_loss_actual"]
+
+            item["total_ctc"] = round(cumulative_ctc, 2)
+            item["total_actual"] = round(cumulative_actual, 2)
+            item["total_revenue"] = round(cumulative_revenue, 2)
+            item["profit_loss_ctc"] = round(cumulative_profit_ctc, 2)
+            item["profit_loss_actual"] = round(cumulative_profit_actual, 2)
+
     return sorted_data
