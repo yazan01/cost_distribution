@@ -23,7 +23,28 @@ def get_project_data(filters):
     view_filter = filters.get("view")
     aggregated_filter = filters.get("aggregated")
     
-    all_projects = frappe.db.sql("""
+    # Convert project_filter list to tuple for SQL IN clause; if None or empty, use empty tuple
+    if project_filter:
+        if isinstance(project_filter, list):
+            project_filter_tuple = tuple(project_filter)
+        else:
+            project_filter_tuple = (project_filter,)
+    else:
+        project_filter_tuple = ()
+
+    # Build where clauses dynamically
+    where_clauses = ["pp.partner = %(partner_filter)s"]
+
+    if project_filter_tuple:
+        where_clauses.append("pp.parent IN %(project_filter)s")
+    if project_type_filter:
+        where_clauses.append("pro.project_type = %(project_type_filter)s")
+    if portfolio_category_filter:
+        where_clauses.append("pro.custom_portfolio_category = %(portfolio_category_filter)s")
+
+    where_sql = " AND ".join(where_clauses)
+
+    query = f"""
         SELECT 
             pp.parent AS project_id,
             pp.percentage AS percentage
@@ -32,19 +53,19 @@ def get_project_data(filters):
         JOIN 
             `tabProject` AS pro ON pro.name = pp.parent 
         WHERE 
-            pp.partner = %(partner_filter)s
-            AND (%(project_filter)s IS NULL OR pp.parent IN %(project_filter)s)
-            AND (%(project_type_filter)s IS NULL OR pro.project_type = %(project_type_filter)s)
-            AND (%(portfolio_category_filter)s IS NULL OR pro.custom_portfolio_category = %(portfolio_category_filter)s)
-    """, {
+            {where_sql}
+    """
+
+    params = {
         "partner_filter": partner_filter,
-        "project_filter": project_filter,
+        "project_filter": project_filter_tuple,
         "project_type_filter": project_type_filter,
         "portfolio_category_filter": portfolio_category_filter
-    }, as_dict=True)
+    }
 
-    #if project_filter:
-        #all_projects = [p for p in all_projects if p["project_id"] == project_filter]
+    all_projects = frappe.db.sql(query, params, as_dict=True)
+
+
     
     project_percentages = {p["project_id"]: float(p["percentage"] or 0) / 100 for p in all_projects}
     project_ids = list(project_percentages.keys())
