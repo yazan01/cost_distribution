@@ -1,10 +1,17 @@
 frappe.query_reports["Partner Portfolio Financial Performance"] = {
-    "filters": [        
+    "filters": [
         {
             "fieldname": "partner",
             "label": ("Partner"),
             "fieldtype": "Link",
             "options": "Employee",
+            "get_query": function() {
+                return {
+                    "filters": [
+                        ["designation", "in", ["Partner", "CEO"]]
+                    ]
+                };
+            }
         },
         {
             "fieldname": "project_type",
@@ -20,14 +27,12 @@ frappe.query_reports["Partner Portfolio Financial Performance"] = {
             "default": "New"
         },
         {
-            fieldname: "project",
-			label: __("Project"),
-			fieldtype: "MultiSelectList",
-			get_data: function (txt) {
-				return frappe.db.get_link_options("Project", txt, {
-					
-				});
-			},    
+            "fieldname": "project",
+            "label": __("Project"),
+            "fieldtype": "MultiSelectList",
+            "get_data": function (txt) {
+                return frappe.db.get_link_options("Project", txt, {});
+            }
         },
         {
             "fieldname": "view",
@@ -43,5 +48,4 @@ frappe.query_reports["Partner Portfolio Financial Performance"] = {
             "default": 0
         }
     ]
-
 };
