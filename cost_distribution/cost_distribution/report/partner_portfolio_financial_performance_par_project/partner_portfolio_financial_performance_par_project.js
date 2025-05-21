@@ -55,12 +55,6 @@ frappe.query_reports["Partner Portfolio Financial Performance Par Project"] = {
             }
         },
         {
-            "fieldname": "aggregated",
-            "label": ("Aggregated"),
-            "fieldtype": "Check",
-            "default": 0
-        },
-        {
             "fieldname": "from_date",
             "label": ("From Date"),
             "fieldtype": "Date"
@@ -69,6 +63,12 @@ frappe.query_reports["Partner Portfolio Financial Performance Par Project"] = {
             "fieldname": "to_date",
             "label": ("To Date"),
             "fieldtype": "Date"
+        },
+        {
+            "fieldname": "aggregated",
+            "label": ("Aggregated"),
+            "fieldtype": "Check",
+            "default": 0
         }
     ]
 };
