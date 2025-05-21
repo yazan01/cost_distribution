@@ -11,7 +11,6 @@ def execute(filters):
         {"label": "Project Type", "fieldname": "project_type", "fieldtype": "Data", "width": 150},
         {"label": "Project Status", "fieldname": "project_status", "fieldtype": "Data", "width": 150},
         {"label": "Client", "fieldname": "client", "fieldtype": "Data", "width": 250},
-
         {"label": "CTC Cost", "fieldname": "total_ctc", "fieldtype": "Float", "width": 200},
         {"label": "Actual Cost", "fieldname": "total_actual", "fieldtype": "Float", "width": 200},
         {"label": "Revenue", "fieldname": "total_revenue", "fieldtype": "Float", "width": 200},
@@ -31,7 +30,6 @@ def get_project_data(filters):
     to_date_filter = filters.get("to_date")
     aggregated_filter = filters.get("aggregated")
 
-    # معالجة الفلاتر
     if project_filter:
         if isinstance(project_filter, list):
             project_filter_tuple = tuple(project_filter)
@@ -82,7 +80,6 @@ def get_project_data(filters):
     if not project_ids:
         return []
 
-    # توسيع الشروط الزمنية للاستعلامات
     date_condition = ""
     if from_date_filter and to_date_filter:
         date_condition = "AND gl.posting_date BETWEEN %(from_date)s AND %(to_date)s"
@@ -108,10 +105,8 @@ def get_project_data(filters):
         JOIN `tabProject` p ON gl.project = p.name
         WHERE gl.project IN %(project_ids)s AND gl.docstatus = 1 AND gl.is_cancelled = 0 {date_condition}
         GROUP BY gl.project
-        ORDER BY gl.project
     """, {**params, "project_ids": project_ids}, as_dict=True)
 
-    # شرط التاريخ لـ CTC
     date_condition_ctc = ""
     if from_date_filter and to_date_filter:
         date_condition_ctc = "AND D.posting_date BETWEEN %(from_date)s AND %(to_date)s"
@@ -128,7 +123,6 @@ def get_project_data(filters):
         JOIN `tabCTC Distribution` D ON S.parent = D.name
         WHERE S.project IN %(project_ids)s {date_condition_ctc}
         GROUP BY S.project
-        ORDER BY S.project
     """, {**params, "project_ids": project_ids}, as_dict=True)
 
     indirect_data = frappe.db.sql(f"""
@@ -146,7 +140,6 @@ def get_project_data(filters):
             AND gl.remarks NOT REGEXP "Cost Distribution"
             {date_condition}
         GROUP BY gl.project
-        ORDER BY gl.project
     """, {**params, "project_ids": project_ids}, as_dict=True)
 
     financial_lookup = {d["project_id"]: d for d in financial_data}
@@ -154,20 +147,8 @@ def get_project_data(filters):
     indirect_lookup = {d["project_id"]: d["indirect_cost"] for d in indirect_data}
 
     final_data = []
-    total_row = _dict({
-        "project_id": _("Total"),
-        "percentage": "",
-        "project_name_a": "",
-        "project_name_e": "",
-        "project_type": "",
-        "project_status": "",
-        "client": "",
-        "total_ctc": 0,
-        "total_actual": 0,
-        "total_revenue": 0,
-        "profit_loss_ctc": 0,
-        "profit_loss_actual": 0,
-    })
+
+    cumulative_ctc = cumulative_actual = cumulative_revenue = cumulative_pl_ctc = cumulative_pl_actual = 0
 
     for project in all_projects:
         pid = project.project_id
@@ -180,6 +161,22 @@ def get_project_data(filters):
         actual = financial_lookup.get(pid, {}).get("actual_cost", 0.0) * percentage
         revenue = financial_lookup.get(pid, {}).get("revenue", 0.0) * percentage
 
+        profit_loss_ctc = revenue - total_ctc
+        profit_loss_actual = revenue - actual
+
+        if aggregated_filter:
+            cumulative_ctc += total_ctc
+            cumulative_actual += actual
+            cumulative_revenue += revenue
+            cumulative_pl_ctc += profit_loss_ctc
+            cumulative_pl_actual += profit_loss_actual
+
+            total_ctc = cumulative_ctc
+            actual = cumulative_actual
+            revenue = cumulative_revenue
+            profit_loss_ctc = cumulative_pl_ctc
+            profit_loss_actual = cumulative_pl_actual
+
         row = {
             "project_id": pid,
             "percentage": round(percentage * 100, 2),
@@ -191,29 +188,14 @@ def get_project_data(filters):
             "total_ctc": round(total_ctc, 2),
             "total_actual": round(actual, 2),
             "total_revenue": round(revenue, 2),
-            "profit_loss_ctc": round(revenue - total_ctc, 2),
-            "profit_loss_actual": round(revenue - actual, 2),
+            "profit_loss_ctc": round(profit_loss_ctc, 2),
+            "profit_loss_actual": round(profit_loss_actual, 2),
         }
-
-        # جمع الإجماليات في حال تم تفعيل aggregated
-        if aggregated_filter:
-            total_row.total_ctc += row["total_ctc"]
-            total_row.total_actual += row["total_actual"]
-            total_row.total_revenue += row["total_revenue"]
-            total_row.profit_loss_ctc += row["profit_loss_ctc"]
-            total_row.profit_loss_actual += row["profit_loss_actual"]
 
         final_data.append(row)
 
-    if aggregated_filter:
-        total_row.total_ctc = round(total_row.total_ctc, 2)
-        total_row.total_actual = round(total_row.total_actual, 2)
-        total_row.total_revenue = round(total_row.total_revenue, 2)
-        total_row.profit_loss_ctc = round(total_row.profit_loss_ctc, 2)
-        total_row.profit_loss_actual = round(total_row.profit_loss_actual, 2)
-        final_data.append(total_row)
-
     return final_data
+
 
 
 
