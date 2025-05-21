@@ -31,7 +31,33 @@ frappe.query_reports["Partner portfolio Financial Performance"] = {
             "label": __("Project"),
             "fieldtype": "MultiSelectList",
             "get_data": function (txt) {
-                return frappe.db.get_link_options("Project", txt, {});
+                const partner = frappe.query_report.get_filter_value("partner");
+                if (!partner) {
+                    frappe.msgprint("Please select a Partner first");
+                    return [];
+                }
+        
+                return frappe.call({
+                    method: "frappe.client.get_list",
+                    args: {
+                        doctype: "Partners Percentage",
+                        fields: ["parent"],
+                        filters: {
+                            partner: partner,
+                            parent: ["like", "%" + txt + "%"]
+                        },
+                        limit_page_length: 50
+                    },
+                    callback: function(r) {
+                        if (r.message) {
+                            const options = r.message.map(d => ({
+                                value: d.parent,
+                                description: d.parent
+                            }));
+                            frappe.query_report.set_filter_options("project", options);
+                        }
+                    }
+                });
             }
         },
         {
