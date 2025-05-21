@@ -225,22 +225,36 @@ def get_project_data(filters):
 
 
 @frappe.whitelist()
-def get_projects_by_partner(partner, txt):
-    projects = frappe.get_all(
-        "Project",
-        filters={
-            "custom_partners_percentage_table": ["is", "set"]  # تأكد أن الحقل ليس فارغ
-        },
-        fields=["name"],
-    )
+def get_projects_by_partner(partner, txt="", project_type=None, portfolio_category=None):
+    # نبني شروط WHERE ديناميكيًا
+    where_clauses = ["pp.partner = %(partner)s"]
 
-    matched_projects = []
+    if project_type:
+        where_clauses.append("pro.project_type = %(project_type)s")
+    if portfolio_category:
+        where_clauses.append("pro.custom_portfolio_category = %(portfolio_category)s")
+    if txt:
+        where_clauses.append("pro.name LIKE %(txt)s")
 
-    for proj in projects:
-        doc = frappe.get_doc("Project", proj.name)
-        for row in doc.custom_partners_percentage_table:
-            if row.partner == partner and txt.lower() in doc.name.lower():
-                matched_projects.append({"value": doc.name, "description": doc.name})
-                break
+    where_sql = " AND ".join(where_clauses)
 
-    return matched_projects
+    query = f"""
+        SELECT 
+            pp.parent AS project
+        FROM 
+            `tabPartners Percentage` pp
+        JOIN 
+            `tabProject` pro ON pro.name = pp.parent
+        WHERE 
+            {where_sql}
+    """
+
+    results = frappe.db.sql(query, {
+        "partner": partner,
+        "project_type": project_type,
+        "portfolio_category": portfolio_category,
+        "txt": f"%{txt}%" if txt else None
+    }, as_dict=True)
+
+    # إرجاع القائمة بصيغة MultiSelectList
+    return [{"value": row.project, "description": row.project} for row in results]
