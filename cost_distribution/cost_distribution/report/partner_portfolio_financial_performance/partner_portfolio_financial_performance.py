@@ -229,7 +229,7 @@ def get_projects_by_partner(partner, txt):
     projects = frappe.get_all(
         "Project",
         filters={
-            "partners_percentage": ["is", "set"]  # تأكد أن الحقل ليس فارغ
+            "custom_partners_percentage_table": ["is", "set"]  # تأكد أن الحقل ليس فارغ
         },
         fields=["name"],
     )
@@ -238,7 +238,7 @@ def get_projects_by_partner(partner, txt):
 
     for proj in projects:
         doc = frappe.get_doc("Project", proj.name)
-        for row in doc.partners_percentage:
+        for row in doc.custom_partners_percentage_table:
             if row.partner == partner and txt.lower() in doc.name.lower():
                 matched_projects.append({"value": doc.name, "description": doc.name})
                 break
