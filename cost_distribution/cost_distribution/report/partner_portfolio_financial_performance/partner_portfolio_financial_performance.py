@@ -222,3 +222,25 @@ def get_project_data(filters):
             item["profit_loss_actual"] = round(cumulative_profit_actual, 2)
 
     return sorted_data
+
+
+@frappe.whitelist()
+def get_projects_by_partner(partner, txt):
+    projects = frappe.get_all(
+        "Project",
+        filters={
+            "partners_percentage": ["is", "set"]  # تأكد أن الحقل ليس فارغ
+        },
+        fields=["name"],
+    )
+
+    matched_projects = []
+
+    for proj in projects:
+        doc = frappe.get_doc("Project", proj.name)
+        for row in doc.partners_percentage:
+            if row.partner == partner and txt.lower() in doc.name.lower():
+                matched_projects.append({"value": doc.name, "description": doc.name})
+                break
+
+    return matched_projects
