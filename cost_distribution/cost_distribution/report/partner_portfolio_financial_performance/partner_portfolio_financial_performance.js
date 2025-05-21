@@ -38,7 +38,7 @@ frappe.query_reports["Partner portfolio Financial Performance"] = {
                 }
         
                 return frappe.call({
-                    method: "path.to.your.report_file.get_projects_by_partner",  // عدّل المسار حسب موقع تقريرك
+                    method: "cost_distribution.report.partner_portfolio_financial_performance.partner_portfolio_financial_performance.get_projects_by_partner",  // عدّل المسار حسب موقع تقريرك
                     args: {
                         partner: partner,
                         txt: txt || ""
