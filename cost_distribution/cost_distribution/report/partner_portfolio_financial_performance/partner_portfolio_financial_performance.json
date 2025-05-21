@@ -12,10 +12,10 @@
  "modified": "2025-01-05 01:35:14.100957",
  "modified_by": "Administrator",
  "module": "Cost Distribution",
- "name": "Partner Portfolio Financial Performance",
+ "name": "Partner portfolio Financial Performance",
  "owner": "Administrator",
  "ref_doctype": "CTC Distribution",
- "report_name": "Partner Portfolio Financial Performance",
+ "report_name": "Partner portfolio Financial Performance",
  "report_type": "Script Report",
  "roles": [
   {
