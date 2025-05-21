@@ -33,6 +33,7 @@ def get_project_data(filters):
             `tabProject` AS pro ON pro.name = pp.parent 
         WHERE 
             pp.partner = %(partner_filter)s
+            AND (%(project_filter)s IS NULL OR pp.parent IN %(project_filter)s)
             AND (%(project_type_filter)s IS NULL OR pro.project_type = %(project_type_filter)s)
             AND (%(portfolio_category_filter)s IS NULL OR pro.custom_portfolio_category = %(portfolio_category_filter)s)
     """, {
@@ -41,8 +42,8 @@ def get_project_data(filters):
         "portfolio_category_filter": portfolio_category_filter
     }, as_dict=True)
 
-    if project_filter:
-        all_projects = [p for p in all_projects if p["project_id"] == project_filter]
+    #if project_filter:
+        #all_projects = [p for p in all_projects if p["project_id"] == project_filter]
     
     project_percentages = {p["project_id"]: float(p["percentage"] or 0) / 100 for p in all_projects}
     project_ids = list(project_percentages.keys())
