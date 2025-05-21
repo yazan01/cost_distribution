@@ -27,8 +27,8 @@ def get_project_data(filters):
     partner_filter = filters.get("partner")
     project_type_filter = filters.get("project_type")
     portfolio_category_filter = filters.get("portfolio_category")
-    from_date_filter = filters.get("from_date_filter")
-    to_date_filter = filters.get("to_date_filter")
+    from_date_filter = filters.get("from_date")
+    to_date_filter = filters.get("to_date")
     aggregated_filter = filters.get("aggregated")
 
     # معالجة الفلاتر
