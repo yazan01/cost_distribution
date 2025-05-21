@@ -5,7 +5,7 @@ from frappe import _, _dict
 def execute(filters):
     columns = [
         {"label": "Project ID", "fieldname": "project_id", "fieldtype": "Link", "options": "Project", "width": 120},
-        {"label": "Percentage", "fieldname": "percentage", "fieldtype": "Data", "width": 120},
+        {"label": "Percentage", "fieldname": "percentage", "fieldtype": "Percent", "width": 120},
         {"label": "Project Name A", "fieldname": "project_name_a", "fieldtype": "Data", "width": 250},
         {"label": "Project Name E", "fieldname": "project_name_e", "fieldtype": "Data", "width": 250},
         {"label": "Project Type", "fieldname": "project_type", "fieldtype": "Data", "width": 150},
