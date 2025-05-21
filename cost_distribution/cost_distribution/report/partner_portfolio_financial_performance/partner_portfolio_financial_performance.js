@@ -20,10 +20,14 @@ frappe.query_reports["Partner portfolio Financial Performance"] = {
             "default": "New"
         },
         {
-            "fieldname": "project",
-            "label": ("Project"),
-            "fieldtype": "MultiSelectList",
-            "options": "Project"
+            fieldname: "project",
+			label: __("Project"),
+			fieldtype: "MultiSelectList",
+			get_data: function (txt) {
+				return frappe.db.get_link_options("Project", txt, {
+					
+				});
+			},    
         },
         {
             "fieldname": "view",
