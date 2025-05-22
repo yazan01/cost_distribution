@@ -190,7 +190,7 @@ def get_ctc_entries(params, project_ids, date_condition_ctc):
     
     entries = frappe.db.sql(f"""
         SELECT 
-            D.project,
+            S.project,
             D.posting_date,
             D.company,
             'CTC Distribution' AS account,
