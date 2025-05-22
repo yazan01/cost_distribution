@@ -188,7 +188,7 @@ def get_project_data(filters):
 def get_ctc_entries(params, project_ids, date_condition_ctc):
     """Get CTC cost distribution entries for the specified project and date range"""
     
-    entries = frappe.db.sql("""
+    entries = frappe.db.sql(f"""
         SELECT 
             D.project,
             D.posting_date,
@@ -213,7 +213,7 @@ def get_ctc_entries(params, project_ids, date_condition_ctc):
 def get_indirect_cost_entries(params, project_ids, date_condition):
     """Get indirect cost entries for the specified project and date range"""
     
-    entries = frappe.db.sql("""
+    entries = frappe.db.sql(f"""
         SELECT 
             gl.posting_date,
             gl.company,
@@ -247,7 +247,7 @@ def get_indirect_cost_entries(params, project_ids, date_condition):
 def get_actual_cost_entries(params, project_ids, date_condition):
     """Get actual cost entries for the specified project and date range"""
     
-    entries = frappe.db.sql("""
+    entries = frappe.db.sql(f"""
         SELECT 
             gl.posting_date,
             gl.company,
@@ -287,7 +287,7 @@ def get_actual_cost_entries(params, project_ids, date_condition):
 def get_revenue_entries_other_company(params, project_ids, date_condition):
     """Get revenue entries for the specified project and date range"""
     
-    entries = frappe.db.sql("""
+    entries = frappe.db.sql(f"""
         SELECT 
             gl.posting_date,
             gl.company,
@@ -329,7 +329,7 @@ def get_revenue_entries_other_company(params, project_ids, date_condition):
 def get_revenue_entries(params, project_ids, date_condition):
     """Get revenue entries for the specified project and date range"""
     
-    entries = frappe.db.sql("""
+    entries = frappe.db.sql(f"""
         SELECT 
             gl.posting_date,
             gl.company,
