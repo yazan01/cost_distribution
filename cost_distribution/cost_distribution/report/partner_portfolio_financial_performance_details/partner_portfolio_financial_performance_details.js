@@ -58,7 +58,7 @@ frappe.query_reports["Partner Portfolio Financial Performance Details"] = {
             "fieldname": "data_type",
             "label": __("Data Type"),
             "fieldtype": "Select",
-            "options": "\nCTC\nActual Cost\nRevenue\nProfit Loss CTC\nProfit Loss Actual",
+            "options": "CTC\nActual Cost\nRevenue\nProfit Loss CTC\nProfit Loss Actual",
             "default": "CTC",
             "on_change": function() {
                 frappe.query_report.refresh();
@@ -67,12 +67,18 @@ frappe.query_reports["Partner Portfolio Financial Performance Details"] = {
         {
             "fieldname": "from_date",
             "label": ("From Date"),
-            "fieldtype": "Date"
+            "fieldtype": "Date",
+            "on_change": function() {
+                frappe.query_report.refresh();
+            }
         },
         {
             "fieldname": "to_date",
             "label": ("To Date"),
             "fieldtype": "Date"
+            "on_change": function() {
+                frappe.query_report.refresh();
+            }
         },
         {
             "fieldname": "aggregated",
