@@ -175,9 +175,9 @@ def get_project_data(filters):
             "party": entry.get("party"),
             "description": entry.get("remarks"),
 
-            "debit": entry.get("debit", 0),
-            "credit": entry.get("credit", 0),
-            "balance": entry.get("credit", 0) - entry.get("debit", 0)
+            "debit": entry.get("debit", 0) * (project_info.get("percentage") / 100),
+            "credit": entry.get("credit", 0) * (project_info.get("percentage") / 100),
+            "balance": entry.get("credit", 0) * (project_info.get("percentage") / 100) - entry.get("debit", 0) * (project_info.get("percentage") / 100)
         })
 
     return final_data
