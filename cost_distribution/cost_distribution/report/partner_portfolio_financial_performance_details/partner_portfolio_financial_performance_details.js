@@ -65,8 +65,8 @@ frappe.query_reports["Partner Portfolio Financial Performance Details"] = {
             }
         },
         {
-            "fieldname": "Group Per Employee",
-            "label": ("group"),
+            "fieldname": "group",
+            "label": ("Group Per Employee"),
             "fieldtype": "Check",
             "default": 0
         },
