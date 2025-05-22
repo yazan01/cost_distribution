@@ -39,7 +39,7 @@ def get_project_data(filters):
     portfolio_category_filter = filters.get("portfolio_category")
     from_date_filter = filters.get("from_date")
     to_date_filter = filters.get("to_date")
-    aggregated_filter = filters.get("aggregated")
+    group_filter = filters.get("group")
     data_type = filters.get("data_type")
 
     if project_filter:
@@ -146,45 +146,127 @@ def get_project_data(filters):
     
     final_data = []
 
-    aggregated_balance = 0
-
-    for entry in data:
-        project_id = entry.get("project")
-
-        if not project_id or project_id not in project_percentages:
-            continue  # تجاهل الإدخالات التي لا تتبع مشاريعنا المحددة
-
-        # البحث عن بيانات المشروع
-        project_info = next((p for p in all_projects if p["project_id"] == project_id), {})
-
-        aggregated_balance += entry.get("credit", 0) * (project_info.get("percentage") / 100) - entry.get("debit", 0) * (project_info.get("percentage") / 100)
+    if group_filter == 1:
+        grouped_data = {}
+        other_data = []
+    
+        for entry in data:
+            project_id = entry.get("project")
+            party = entry.get("party")
+    
+            if not project_id or project_id not in project_percentages:
+                continue
+    
+            project_info = next((p for p in all_projects if p["project_id"] == project_id), {})
+            percentage = project_info.get("percentage") / 100
+    
+            debit = entry.get("debit", 0) * percentage
+            credit = entry.get("credit", 0) * percentage
+    
+            if party and entry.get("party_type") == "Employee":
+                key = (project_id, party)
+                if key not in grouped_data:
+                    grouped_data[key] = {
+                        "project_id": project_id,
+                        "party": party,
+                        "debit": 0,
+                        "credit": 0,
+                        "balance": 0, 
+    
+                        "percentage": project_info.get("percentage"),
+                        "project_name_a": project_info.get("project_name_a"),
+                        "project_name_e": project_info.get("project_name_e"),
+                        "project_type": project_info.get("project_type"),
+                        "project_status": project_info.get("project_status"),
+                        "client": project_info.get("client"),
+    
+                        "date": "",
+                        "company": "",
+                        "account": "",
+                        "voucher_type": "",
+                        "voucher_no": "",
+                        "party_type": "Employee",
+                        "description": "",
+                    }
+    
+                grouped_data[key]["debit"] += debit
+                grouped_data[key]["credit"] += credit
+    
+            else:
+                other_data.append({
+                    "project_id": project_info.get("project_id"),
+                    "percentage": project_info.get("percentage"),
+                    "project_name_a": project_info.get("project_name_a"),
+                    "project_name_e": project_info.get("project_name_e"),
+                    "project_type": project_info.get("project_type"),
+                    "project_status": project_info.get("project_status"),
+                    "client": project_info.get("client"),
+    
+                    "date": entry.get("posting_date"),
+                    "company": entry.get("company"),
+                    "account": entry.get("account"),
+                    "voucher_type": entry.get("voucher_type"),
+                    "voucher_no": entry.get("voucher_no"),
+    
+                    "party_type": entry.get("party_type"),
+                    "party": entry.get("party"),
+                    "description": entry.get("remarks"),
+    
+                    "debit": debit,
+                    "credit": credit,
+                    "balance": 0 
+                })
+    
         
-        # إنشاء سجل جديد يحتوي على جميع البيانات
-        final_data.append({
-            "project_id": project_info.get("project_id"),
-            "percentage": project_info.get("percentage"),
-            "project_name_a": project_info.get("project_name_a"),
-            "project_name_e": project_info.get("project_name_e"),
-            "project_type": project_info.get("project_type"),
-            "project_status": project_info.get("project_status"),
-            "client": project_info.get("client"),
+        final_data = list(grouped_data.values()) + other_data
+    
+        aggregated_balance = 0
+        for row in final_data:
+            aggregated_balance += row["credit"] - row["debit"]
+            row["balance"] = aggregated_balance
 
-            "date": entry.get("posting_date"),
-            "company": entry.get("company"),
-            "account": entry.get("account"),
-            "voucher_type": entry.get("voucher_type"),
-            "voucher_no": entry.get("voucher_no"),
-
-            "party_type": entry.get("party_type"),
-            "party": entry.get("party"),
-            "description": entry.get("remarks"),
-
-            "debit": entry.get("debit", 0) * (project_info.get("percentage") / 100),
-            "credit": entry.get("credit", 0) * (project_info.get("percentage") / 100),
-            "balance": aggregated_balance
-        })
-
+    else:
+        # السلوك العادي بدون تجميع
+        aggregated_balance = 0
+        for entry in data:
+            project_id = entry.get("project")
+    
+            if not project_id or project_id not in project_percentages:
+                continue
+    
+            project_info = next((p for p in all_projects if p["project_id"] == project_id), {})
+            percentage = project_info.get("percentage") / 100
+    
+            debit = entry.get("debit", 0) * percentage
+            credit = entry.get("credit", 0) * percentage
+            aggregated_balance += credit - debit
+    
+            final_data.append({
+                "project_id": project_info.get("project_id"),
+                "percentage": project_info.get("percentage"),
+                "project_name_a": project_info.get("project_name_a"),
+                "project_name_e": project_info.get("project_name_e"),
+                "project_type": project_info.get("project_type"),
+                "project_status": project_info.get("project_status"),
+                "client": project_info.get("client"),
+    
+                "date": entry.get("posting_date"),
+                "company": entry.get("company"),
+                "account": entry.get("account"),
+                "voucher_type": entry.get("voucher_type"),
+                "voucher_no": entry.get("voucher_no"),
+    
+                "party_type": entry.get("party_type"),
+                "party": entry.get("party"),
+                "description": entry.get("remarks"),
+    
+                "debit": debit,
+                "credit": credit,
+                "balance": aggregated_balance
+            })
+    
     return final_data
+
 
     
 
