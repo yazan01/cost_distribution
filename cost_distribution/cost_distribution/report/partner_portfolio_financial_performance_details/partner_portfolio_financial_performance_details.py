@@ -117,24 +117,24 @@ def get_project_data(filters):
         indirect_entries = get_indirect_cost_entries(params, project_ids, date_condition)
         data = ctc_entries + indirect_entries
     
-    elif data_type == "Actual Cost":
+    if data_type == "Actual Cost":
         # Actual Cost data
         actual_cost = get_actual_cost_entries(params, project_ids, date_condition)
         revenue_other_company = get_revenue_entries_other_company(params, project_ids, date_condition)
         data = actual_cost + revenue_other_company
     
-    elif data_type == "Revenue":
+    if data_type == "Revenue":
         # Revenue data
         data = get_revenue_entries(params, project_ids, date_condition)
     
-    elif data_type == "Profit Loss CTC":
+    if data_type == "Profit Loss CTC":
         # Profit/Loss on CTC
         revenue_data = get_revenue_entries(params, project_ids, date_condition)
         ctc_entries = get_ctc_entries(params, project_ids, date_condition_ctc)
         indirect_entries = get_indirect_cost_entries(params, project_ids, date_condition)
         data = revenue_data + ctc_entries + indirect_entries
     
-    elif data_type == "Profit Loss Actual":
+    if data_type == "Profit Loss Actual":
         # Profit/Loss on Actual Cost
         revenue_data = get_revenue_entries(params, project_ids, date_condition)
         actual_data = get_actual_cost_entries(params, project_ids, date_condition)
