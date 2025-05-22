@@ -146,6 +146,8 @@ def get_project_data(filters):
     
     final_data = []
 
+    aggregated_balance = 0
+
     for entry in data:
         project_id = entry.get("project")
 
@@ -155,6 +157,8 @@ def get_project_data(filters):
         # البحث عن بيانات المشروع
         project_info = next((p for p in all_projects if p["project_id"] == project_id), {})
 
+        aggregated_balance += entry.get("credit", 0) * (project_info.get("percentage") / 100) - entry.get("debit", 0) * (project_info.get("percentage") / 100)
+        
         # إنشاء سجل جديد يحتوي على جميع البيانات
         final_data.append({
             "project_id": project_info.get("project_id"),
@@ -177,7 +181,7 @@ def get_project_data(filters):
 
             "debit": entry.get("debit", 0) * (project_info.get("percentage") / 100),
             "credit": entry.get("credit", 0) * (project_info.get("percentage") / 100),
-            "balance": entry.get("credit", 0) * (project_info.get("percentage") / 100) - entry.get("debit", 0) * (project_info.get("percentage") / 100)
+            "balance": aggregated_balance
         })
 
     return final_data
