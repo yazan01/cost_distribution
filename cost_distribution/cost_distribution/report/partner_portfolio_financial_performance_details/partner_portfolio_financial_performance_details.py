@@ -214,7 +214,8 @@ def get_indirect_cost_entries(params, project_ids, date_condition):
     """Get indirect cost entries for the specified project and date range"""
     
     entries = frappe.db.sql(f"""
-        SELECT 
+        SELECT
+            gl.project,
             gl.posting_date,
             gl.company,
             gl.account,
@@ -249,6 +250,7 @@ def get_actual_cost_entries(params, project_ids, date_condition):
     
     entries = frappe.db.sql(f"""
         SELECT 
+            gl.project,
             gl.posting_date,
             gl.company,
             gl.account,
@@ -289,6 +291,7 @@ def get_revenue_entries_other_company(params, project_ids, date_condition):
     
     entries = frappe.db.sql(f"""
         SELECT 
+            gl.project,
             gl.posting_date,
             gl.company,
             gl.account,
@@ -331,6 +334,7 @@ def get_revenue_entries(params, project_ids, date_condition):
     
     entries = frappe.db.sql(f"""
         SELECT 
+            gl.project,
             gl.posting_date,
             gl.company,
             gl.account,
