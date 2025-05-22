@@ -206,7 +206,7 @@ def get_ctc_entries(params, project_ids, date_condition_ctc):
         JOIN `tabEmployee` E ON S.employee = E.name
         WHERE 
             S.project IN %(project_ids)s {date_condition_ctc}     
-    """, (**params, "project_ids": project_ids), as_dict=True)
+    """, {**params, "project_ids": project_ids}, as_dict=True)
     
     return entries
 
@@ -240,7 +240,7 @@ def get_indirect_cost_entries(params, project_ids, date_condition):
             AND gl.remarks NOT REGEXP "Cost Distribution"
             {date_condition}
         ORDER BY gl.posting_date
-    """, (**params, "project_ids": project_ids), as_dict=True)
+    """, {**params, "project_ids": project_ids}, as_dict=True)
     
     return entries
 
@@ -280,7 +280,7 @@ def get_actual_cost_entries(params, project_ids, date_condition):
             AND gl.account LIKE %(act)s
             {date_condition}
         ORDER BY gl.posting_date
-    """, (**params, "project_ids": project_ids), as_dict=True)
+    """, {**params, "project_ids": project_ids}, as_dict=True)
     
     return entries
 
@@ -321,7 +321,7 @@ def get_revenue_entries_other_company(params, project_ids, date_condition):
             AND gl.company != p.company
             {date_condition}
         ORDER BY gl.posting_date
-    """, (**params, "project_ids": project_ids), as_dict=True)
+    """, {**params, "project_ids": project_ids}, as_dict=True)
     
     return entries
 
@@ -362,7 +362,7 @@ def get_revenue_entries(params, project_ids, date_condition):
             AND gl.account LIKE %(rev)s
             AND gl.company = p.company
         ORDER BY gl.posting_date
-    """, (**params, "project_ids": project_ids), as_dict=True)
+    """, {**params, "project_ids": project_ids}, as_dict=True)
     
     return entries
 
