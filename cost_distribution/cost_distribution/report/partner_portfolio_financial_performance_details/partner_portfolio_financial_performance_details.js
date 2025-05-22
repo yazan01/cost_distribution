@@ -65,6 +65,12 @@ frappe.query_reports["Partner Portfolio Financial Performance Details"] = {
             }
         },
         {
+            "fieldname": "Group Per Employee",
+            "label": ("group"),
+            "fieldtype": "Check",
+            "default": 0
+        },
+        {
             "fieldname": "from_date",
             "label": ("From Date"),
             "fieldtype": "Date",
@@ -79,12 +85,6 @@ frappe.query_reports["Partner Portfolio Financial Performance Details"] = {
             "on_change": function() {
                 frappe.query_report.refresh();
             }
-        },
-        {
-            "fieldname": "aggregated",
-            "label": ("Aggregated"),
-            "fieldtype": "Check",
-            "default": 0
         }
     ]
 };
