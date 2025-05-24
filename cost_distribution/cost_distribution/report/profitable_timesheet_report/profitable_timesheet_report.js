@@ -1,0 +1,44 @@
+frappe.query_reports["Profitable Timesheet Report"] = {
+  filters: [
+    {
+      fieldname: "from_date",
+      label: "From Date",
+      fieldtype: "Date",
+      default: frappe.datetime.month_start(),
+      reqd: 1
+    },
+    {
+      fieldname: "to_date",
+      label: "To Date",
+      fieldtype: "Date",
+      default: frappe.datetime.month_end(),
+      reqd: 1
+    },
+    {
+      fieldname: "employee",
+      label: "Employee",
+      fieldtype: "Link",
+      options: "Employee"
+    },
+    {
+      fieldname: "employee_name",
+      label: "Employee Name",
+      fieldtype: "Data",
+      read_only: 1,
+      depends_on: "eval:doc.employee"
+    }
+  ],
+
+  onload: function(report) {
+    report.page.fields_dict.employee.$wrapper.on('change', function() {
+      let emp = report.get_filter_value("employee");
+      if (emp) {
+        frappe.db.get_value("Employee", emp, "employee_name").then(r => {
+          report.set_filter_value("employee_name", r.message.employee_name);
+        });
+      } else {
+        report.set_filter_value("employee_name", "");
+      }
+    });
+  }
+};
