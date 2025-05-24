@@ -100,7 +100,7 @@ def execute(filters=None):
         LEFT JOIN
             `tabLevel Rate` AS lr
         ON
-            cost.level = lr.parent AND YEAR(ctc.posting_date) = lr.year AND psc.project = lr.project
+            cost.level = lr.parent AND YEAR(ctc.posting_date) = lr.year AND (psc.project = lr.project OR lr.project IS NULL)
         WHERE
             ctc.docstatus = 1
             AND ctc.posting_date BETWEEN %(from_date)s AND %(to_date)s
