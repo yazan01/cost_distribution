@@ -9,14 +9,14 @@ def execute(filters=None):
     if from_date and to_date:
         conditions += f" AND t.time_date BETWEEN '{from_date}' AND '{to_date}'"
     if employee:
-        conditions += f" AND t.employee = '{employee}'"
+        conditions += f" AND ts.employee = '{employee}'"
 
     # Exclude rows with NULL allocation type
     conditions += " AND p.custom_allocation_type IS NOT NULL"
 
     data = frappe.db.sql("""
         SELECT 
-            t.employee,
+            ts.employee,
             e.employee_name,
             SUM(t.hours) AS total_hours,
             SUM(CASE WHEN p.custom_allocation_type = 'Billable' THEN t.hours ELSE 0 END) AS billable_hours,
@@ -25,10 +25,10 @@ def execute(filters=None):
         FROM `tabTimesheet Detail` t
         JOIN `tabTimesheet` ts ON t.parent = ts.name
         LEFT JOIN `tabProject` p ON t.project = p.name
-        LEFT JOIN `tabEmployee` e ON t.employee = e.name
+        LEFT JOIN `tabEmployee` e ON ts.employee = e.name
         WHERE {conditions}
         AND e.gender = 'Female'
-        GROUP BY t.employee, e.employee_name
+        GROUP BY ts.employee, e.employee_name
     """.format(conditions=conditions), as_dict=True)
 
     for row in data:
