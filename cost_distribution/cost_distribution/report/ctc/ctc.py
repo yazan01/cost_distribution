@@ -66,13 +66,15 @@ def execute(filters=None):
             cost.designation AS 'Designation',
             cost.level AS 'Level',
             CASE 
-                WHEN cost.employment_type = 'Permanent' THEN lr.ctc
+                WHEN cost.employment_type = 'Permanent' AND psc.project = lr.project THEN lr.ctc
+		WHEN cost.employment_type = 'Permanent' AND psc.project != lr.project AND lr.project IS NULL THEN lr.ctc
                 ELSE cost.ctc
             END AS 'Level CTC',
             CASE 
                 WHEN cost.total_hours = 0 THEN 1
                 ELSE CASE
-                         WHEN cost.employment_type = 'Permanent' THEN (lr.ctc/(cost.ctc/cost.total_hours))
+                         WHEN cost.employment_type = 'Permanent' AND psc.project = lr.project THEN (lr.ctc/(cost.ctc/cost.total_hours))
+			 WHEN cost.employment_type = 'Permanent' AND psc.project != lr.project AND lr.project IS NULL THEN (lr.ctc/(cost.ctc/cost.total_hours))
                          ELSE cost.total_hours
                      END
             END AS 'Total Hours',
