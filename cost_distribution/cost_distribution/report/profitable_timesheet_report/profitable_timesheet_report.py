@@ -20,6 +20,7 @@ def execute(filters=None):
             e.employee_name,
             SUM(t.hours) AS total_hours,
             SUM(CASE WHEN p.custom_allocation_type = 'Billable' THEN t.hours ELSE 0 END) AS billable_hours,
+            SUM(CASE WHEN p.custom_allocation_type = 'Partially Billable' THEN t.hours ELSE 0 END) AS partial_hours,
             SUM(CASE WHEN p.custom_allocation_type = 'Partially Billable' 
                      THEN (t.hours * IFNULL(p.custom_allocation_percent, 0) / 100) ELSE 0 END) AS partial_billable_hours
         FROM `tabTimesheet Detail` t
@@ -40,6 +41,8 @@ def execute(filters=None):
         {"label": "Employee", "fieldname": "employee", "fieldtype": "Link", "options": "Employee", "width": 150},
         {"label": "Employee Name", "fieldname": "employee_name", "fieldtype": "Data", "width": 180},
         {"label": "Total Hours", "fieldname": "total_hours", "fieldtype": "Float", "width": 120},
+        {"label": "Billable Hours", "fieldname": "billable_hours", "fieldtype": "Float", "width": 120},
+        {"label": "Partially Billable Hours", "fieldname": "partial_hours", "fieldtype": "Float", "width": 150},
         {"label": "Profitable Hours", "fieldname": "total_profitable_hours", "fieldtype": "Float", "width": 140},
         {"label": "Profitability %", "fieldname": "profitable_ratio", "fieldtype": "Percent", "width": 140},
     ]
