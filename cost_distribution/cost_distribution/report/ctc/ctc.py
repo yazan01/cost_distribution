@@ -55,59 +55,67 @@ def execute(filters=None):
 	
     data_1 = frappe.db.sql("""
         SELECT 
-            NULL AS 'Account',
-            ctc.posting_date AS 'Posting Date',
-            psc.project AS 'Project',
-            pro.project_name AS 'Project Name',
-            psc.cost_center AS 'Cost Center',
-            cost.employee AS 'Employee',
-            cost.employee_name AS 'Employee Name',
-            cost.employment_type AS 'Employee Type',
-            cost.designation AS 'Designation',
-            cost.level AS 'Level',
-            CASE 
-                WHEN cost.employment_type = 'Permanent' THEN lr.ctc		
-                ELSE cost.ctc
-            END AS 'Level CTC',
-            CASE 
-                WHEN cost.total_hours = 0 THEN 1
-                ELSE CASE
-                         WHEN cost.employment_type = 'Permanent' THEN (lr.ctc/(cost.ctc/cost.total_hours))			
-                         ELSE cost.total_hours
-                     END
-            END AS 'Total Hours',
-            (cost.ctc/cost.total_hours) AS 'Hours Rate',
-            psc.total_hours AS 'Hours',
-            psc.total_cost_of_project AS 'Total',            
-            pro.project_type AS 'Project Type',
-            pro.project_manager AS 'Manager',
-            pro.project_manager_name AS 'Manager Name',            
-            ctc.name AS 'CTC'           
-        FROM
-            `tabCTC Distribution` AS ctc
-        JOIN
-            `tabEmployee Cost Table CTC` AS cost
-        ON
-            ctc.name = cost.parent
-        JOIN
-            `tabProject Summary CTC` AS psc
-        ON
-            ctc.name = psc.parent AND cost.employee = psc.employee 
-        JOIN
-            `tabProject` AS pro
-        ON
-            psc.project = pro.name
-        LEFT JOIN
-            `tabLevel Rate` AS lr
-        ON
-            cost.level = lr.parent AND YEAR(ctc.posting_date) = lr.year AND (psc.project = lr.project OR lr.project IS NULL)
-        WHERE
-            ctc.docstatus = 1
-            AND ctc.posting_date BETWEEN %(from_date)s AND %(to_date)s
-            AND psc.project IN %(accessible_projects)s
-            AND cost.docstatus = 1
-			AND pro.project_manager IN %(manager)s
-			AND pro.project_type IN %(type)s
+	    NULL AS 'Account',
+	    ctc.posting_date AS 'Posting Date',
+	    psc.project AS 'Project',
+	    pro.project_name AS 'Project Name',
+	    psc.cost_center AS 'Cost Center',
+	    cost.employee AS 'Employee',
+	    cost.employee_name AS 'Employee Name',
+	    cost.employment_type AS 'Employee Type',
+	    cost.designation AS 'Designation',
+	    cost.level AS 'Level',
+	    CASE 
+	        WHEN cost.employment_type = 'Permanent' THEN COALESCE(lr_specific.ctc, lr_fallback.ctc)
+	        ELSE cost.ctc
+	    END AS 'Level CTC',
+	    CASE 
+	        WHEN cost.total_hours = 0 THEN 1
+	        ELSE CASE
+	                 WHEN cost.employment_type = 'Permanent' THEN COALESCE(lr_specific.ctc, lr_fallback.ctc)/(cost.ctc/cost.total_hours)
+	                 ELSE cost.total_hours
+	             END
+	    END AS 'Total Hours',
+	    (cost.ctc/cost.total_hours) AS 'Hours Rate',
+	    psc.total_hours AS 'Hours',
+	    psc.total_cost_of_project AS 'Total',            
+	    pro.project_type AS 'Project Type',
+	    pro.project_manager AS 'Manager',
+	    pro.project_manager_name AS 'Manager Name',            
+	    ctc.name AS 'CTC'           
+	FROM
+	    `tabCTC Distribution` AS ctc
+	JOIN
+	    `tabEmployee Cost Table CTC` AS cost
+	ON
+	    ctc.name = cost.parent
+	JOIN
+	    `tabProject Summary CTC` AS psc
+	ON
+	    ctc.name = psc.parent AND cost.employee = psc.employee 
+	JOIN
+	    `tabProject` AS pro
+	ON
+	    psc.project = pro.name
+	LEFT JOIN
+	    `tabLevel Rate` AS lr_specific
+	ON
+	    cost.level = lr_specific.parent 
+	    AND YEAR(ctc.posting_date) = lr_specific.year
+	    AND psc.project = lr_specific.project
+	LEFT JOIN
+	    `tabLevel Rate` AS lr_fallback
+	ON
+	    cost.level = lr_fallback.parent
+	    AND YEAR(ctc.posting_date) = lr_fallback.year
+	    AND lr_fallback.project IS NULL
+	WHERE
+	    ctc.docstatus = 1
+	    AND ctc.posting_date BETWEEN %(from_date)s AND %(to_date)s
+	    AND psc.project IN %(accessible_projects)s
+	    AND cost.docstatus = 1
+	    AND pro.project_manager IN %(manager)s
+	    AND pro.project_type IN %(type)s
 
         UNION ALL
 
