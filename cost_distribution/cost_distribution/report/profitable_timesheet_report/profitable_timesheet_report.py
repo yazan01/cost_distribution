@@ -27,7 +27,6 @@ def execute(filters=None):
         LEFT JOIN `tabProject` p ON t.project = p.name
         LEFT JOIN `tabEmployee` e ON ts.employee = e.name
         WHERE {conditions}
-        AND e.gender = 'Female'
         GROUP BY ts.employee, e.employee_name
     """.format(conditions=conditions), as_dict=True)
 
