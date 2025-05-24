@@ -37,12 +37,12 @@ def execute(filters=None):
         row.profitable_ratio = round((total_profitable / total) * 100, 2) if total else 0
 
     columns = [
-        {"label": "Employee", "fieldname": "employee", "fieldtype": "Link", "options": "Employee", "width": 200},
+        {"label": "Employee", "fieldname": "employee", "fieldtype": "Link", "options": "Employee", "width": 180},
         {"label": "Employee Name", "fieldname": "employee_name", "fieldtype": "Data", "width": 180},
         {"label": "Total Hours", "fieldname": "total_hours", "fieldtype": "Float", "width": 150},
         {"label": "Billable Hours", "fieldname": "billable_hours", "fieldtype": "Float", "width": 150},
-        {"label": "Partially Billable Hours", "fieldname": "partial_billable_hours", "fieldtype": "Float", "width": 200},
-        {"label": "Total Profitable Hours", "fieldname": "total_profitable_hours", "fieldtype": "Float", "width": 200},
+        {"label": "Partially Billable Hours", "fieldname": "partial_billable_hours", "fieldtype": "Float", "width": 180},
+        {"label": "Total Profitable Hours", "fieldname": "total_profitable_hours", "fieldtype": "Float", "width": 180},
         {"label": "Profitability %", "fieldname": "profitable_ratio", "fieldtype": "Percent", "width": 150},
     ]
 
