@@ -7,7 +7,7 @@ def execute(filters=None):
 
     conditions = "1=1"
     if from_date and to_date:
-        conditions += f" AND t.time_date BETWEEN '{from_date}' AND '{to_date}'"
+        conditions += f" AND ts.start_date BETWEEN '{from_date}' AND '{to_date}'"
     if employee:
         conditions += f" AND ts.employee = '{employee}'"
 
