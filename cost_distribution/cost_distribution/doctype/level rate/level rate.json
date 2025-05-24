@@ -55,6 +55,13 @@
       "in_list_view": 1
     },
     {
+      "fieldname": "project",
+      "fieldtype": "Link",
+      "label": "Project",
+      "options": "Project",
+      "in_list_view": 1
+    },
+    {
       "fieldname": "column_break_gpaf",
       "fieldtype": "Column Break",
       "label": ""
