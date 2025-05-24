@@ -72,26 +72,11 @@ def execute(filters=None):
 	    CASE 
 	        WHEN cost.total_hours = 0 THEN 1
 	        ELSE CASE
-	                 WHEN cost.employment_type = 'Permanent' THEN 
-	                     -- نحسب Total Hours بناءً على lr.ctc أو fallback
-	                     (COALESCE(lr_specific.ctc, lr_fallback.ctc) / (cost.ctc / cost.total_hours))
+	                 WHEN cost.employment_type = 'Permanent' THEN cost.total_hours
 	                 ELSE cost.total_hours
 	             END
 	    END AS 'Total Hours',
-	    -- Hours Rate محسوبة من الـ CTC المعدل مقسوم على Total Hours المعدلة
-	    CASE
-	        WHEN cost.total_hours = 0 THEN COALESCE(lr_specific.ctc, lr_fallback.ctc)
-	        ELSE 
-	            CASE
-	                WHEN cost.employment_type = 'Permanent' THEN 
-	                    COALESCE(lr_specific.ctc, lr_fallback.ctc) / 
-	                    (CASE 
-	                        WHEN cost.total_hours = 0 THEN 1 
-	                        ELSE (COALESCE(lr_specific.ctc, lr_fallback.ctc) / (cost.ctc / cost.total_hours)) 
-	                    END)
-	                ELSE cost.ctc / cost.total_hours
-	            END
-	    END AS 'Hours Rate',
+	    (psc.total_cost_of_project/psc.total_hours) AS 'Hours Rate',
 	    psc.total_hours AS 'Hours',
 	    psc.total_cost_of_project AS 'Total',            
 	    pro.project_type AS 'Project Type',
