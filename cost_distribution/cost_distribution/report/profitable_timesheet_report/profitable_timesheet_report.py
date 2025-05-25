@@ -42,8 +42,8 @@ def execute(filters=None):
         {"label": "Total Hours", "fieldname": "total_hours", "fieldtype": "Float", "width": 150},
         {"label": "Billable Hours", "fieldname": "billable_hours", "fieldtype": "Float", "width": 150},
         {"label": "Partially Billable Hours", "fieldname": "partial_billable_hours", "fieldtype": "Float", "width": 180},
-        {"label": "Total Profitable Hours", "fieldname": "total_profitable_hours", "fieldtype": "Float", "width": 180},
-        {"label": "Profitability %", "fieldname": "profitable_ratio", "fieldtype": "Percent", "width": 150},
+        {"label": "Total Billable Hours", "fieldname": "total_profitable_hours", "fieldtype": "Float", "width": 180},
+        {"label": "Billable Hours %", "fieldname": "profitable_ratio", "fieldtype": "Percent", "width": 180},
     ]
 
     return columns, data
