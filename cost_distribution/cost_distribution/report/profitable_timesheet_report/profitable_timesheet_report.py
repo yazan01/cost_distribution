@@ -18,7 +18,7 @@ def execute(filters=None):
         SELECT 
             ts.employee,
             e.employee_name,
-            SUM(t.hours) AS total_hours,
+            SUM(CASE WHEN p.custom_allocation_type != 'NA' THEN t.hours ELSE 0 END) AS total_hours,
             SUM(CASE WHEN p.custom_allocation_type = 'Billable' THEN t.hours ELSE 0 END) AS billable_hours,
             SUM(CASE WHEN p.custom_allocation_type = 'Partially Billable' 
                      THEN (t.hours * IFNULL(p.custom_allocation_percent, 0) / 100) ELSE 0 END) AS partial_billable_hours
