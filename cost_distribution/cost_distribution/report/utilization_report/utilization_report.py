@@ -15,7 +15,7 @@ def execute(filters=None):
     if employee:
         conditions += f" AND ts.employee = '{employee}'"
     if unit:
-        conditions += f" AND e.unit = '{unit}'"
+        conditions += f" AND e.custom_supporting_services__consultant = '{unit}'"
     if employee_status:
         conditions += f" AND e.status = '{employee_status}'"
     if portfolio_type:
