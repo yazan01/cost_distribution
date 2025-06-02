@@ -26,7 +26,7 @@ frappe.query_reports["Utilization Report"] = {
       label: "Portfolio Type",
       fieldtype: "Select",
       default: "NEW",
-      options: ""\nNEW\nOLD"
+      options: "\nNEW\nOLD"
     },
     {
       fieldname: "employee_status",
