@@ -19,39 +19,21 @@ frappe.query_reports["Utilization Report"] = {
       label: "Unit",
       fieldtype: "Select",
       default: "Consultant",
-      options: [
-        "",
-        "Supporting Services",
-        "Consultant",
-        "Service Provider",
-        "iValue Academy",
-        "Business development",
-        "iValue Real Estate"
-      ].join("\n")
+      options: "\nSupporting Services\nConsultant\nService Provider\niValue Academy\nBusiness development\niValue Real Estate"
     },
     {
       fieldname: "portfolio_type",
       label: "Portfolio Type",
       fieldtype: "Select",
       default: "NEW",
-      options: [
-        "",
-        "NEW",
-        "OLD"
-      ].join("\n")
+      options: ""\nNEW\nOLD"
     },
     {
       fieldname: "employee_status",
       label: "Employee Status",
       fieldtype: "Select",
       default: "Active",
-      options: [
-        ""
-        "Active",
-        "Inactive",
-        "Suspended",
-        "Left"
-      ].join("\n")
+      options: "\nActive\nInactive\nSuspended\nLeft"
     },
     {
       fieldname: "level",
