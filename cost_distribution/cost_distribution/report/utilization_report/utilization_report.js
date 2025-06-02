@@ -20,6 +20,7 @@ frappe.query_reports["Utilization Report"] = {
       fieldtype: "Select",
       default: "Consultant",
       options: [
+        "",
         "Supporting Services",
         "Consultant",
         "Service Provider",
@@ -34,6 +35,7 @@ frappe.query_reports["Utilization Report"] = {
       fieldtype: "Select",
       default: "NEW",
       options: [
+        "",
         "NEW",
         "OLD"
       ].join("\n")
@@ -44,6 +46,7 @@ frappe.query_reports["Utilization Report"] = {
       fieldtype: "Select",
       default: "Active",
       options: [
+        ""
         "Active",
         "Inactive",
         "Suspended",
