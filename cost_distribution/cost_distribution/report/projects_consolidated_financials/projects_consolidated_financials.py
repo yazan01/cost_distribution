@@ -92,7 +92,7 @@ def get_project_data(filters):
         WHERE 
             gl.project IN %(project_ids)s 
             AND YEAR(gl.posting_date) IN (2023, 2024, 2025)
-            AND gl.docstatus = 1 AND gl.is_cancelled = 0 
+            AND gl.docstatus = 1 AND gl.is_cancelled = 0 AND gl.remarks NOT REGEXP "CAPITALIZATION"
         GROUP BY gl.project, YEAR(gl.posting_date)
     """, {"project_ids": project_ids, 'act': '5%', 'rev': '4%'}, as_dict=True)
 
@@ -123,7 +123,7 @@ def get_project_data(filters):
             AND gl.docstatus = 1 
             AND gl.is_cancelled = 0 
             AND gl.account LIKE %(acc)s
-            AND gl.remarks NOT REGEXP "Cost Distribution"
+            AND gl.remarks NOT REGEXP "Cost Distribution" AND gl.remarks NOT REGEXP "CAPITALIZATION"
         GROUP BY gl.project, YEAR(gl.posting_date)
     """, {"project_ids": project_ids, 'acc': '5%'}, as_dict=True)
 
