@@ -324,7 +324,7 @@ def get_indirect_cost_entries(params, project_ids, date_condition):
             AND gl.docstatus = 1 
             AND gl.is_cancelled = 0
             AND gl.account LIKE %(acc)s
-            AND gl.remarks NOT REGEXP "Cost Distribution"
+            AND gl.remarks NOT REGEXP "Cost Distribution" AND gl.remarks NOT REGEXP "CAPITALIZATION"
             {date_condition}
         ORDER BY gl.posting_date
     """, {**params, "project_ids": project_ids}, as_dict=True)
@@ -365,7 +365,7 @@ def get_actual_cost_entries(params, project_ids, date_condition):
             gl.project IN %(project_ids)s
             AND gl.docstatus = 1 
             AND gl.is_cancelled = 0 
-            AND gl.account LIKE %(act)s
+            AND gl.account LIKE %(act)s AND gl.remarks NOT REGEXP "CAPITALIZATION"
             {date_condition}
         ORDER BY gl.posting_date
     """, {**params, "project_ids": project_ids}, as_dict=True)
@@ -407,7 +407,7 @@ def get_revenue_entries_other_company(params, project_ids, date_condition):
             AND gl.docstatus = 1 
             AND gl.is_cancelled = 0 
             AND gl.account LIKE %(rev)s
-            AND gl.company != p.company
+            AND gl.company != p.company AND gl.remarks NOT REGEXP "CAPITALIZATION"
             {date_condition}
         ORDER BY gl.posting_date
     """, {**params, "project_ids": project_ids}, as_dict=True)
@@ -450,7 +450,7 @@ def get_revenue_entries(params, project_ids, date_condition):
             AND gl.docstatus = 1 
             AND gl.is_cancelled = 0 
             AND gl.account LIKE %(rev)s
-            AND gl.company = p.company
+            AND gl.company = p.company AND gl.remarks NOT REGEXP "CAPITALIZATION"
         ORDER BY gl.posting_date
     """, {**params, "project_ids": project_ids}, as_dict=True)
     
