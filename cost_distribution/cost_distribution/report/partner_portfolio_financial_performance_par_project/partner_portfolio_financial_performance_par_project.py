@@ -103,7 +103,7 @@ def get_project_data(filters):
                      WHEN gl.account LIKE %(rev)s AND gl.company = p.company AND gl.company = 'iValue KSA' THEN gl.credit - gl.debit ELSE 0 END) AS revenue
         FROM `tabGL Entry` gl
         JOIN `tabProject` p ON gl.project = p.name
-        WHERE gl.project IN %(project_ids)s AND gl.docstatus = 1 AND gl.is_cancelled = 0 {date_condition}
+        WHERE gl.project IN %(project_ids)s AND gl.docstatus = 1 AND gl.is_cancelled = 0 AND gl.remarks NOT REGEXP "CAPITALIZATION" {date_condition}
         GROUP BY gl.project
     """, {**params, "project_ids": project_ids}, as_dict=True)
 
@@ -137,7 +137,7 @@ def get_project_data(filters):
             AND gl.docstatus = 1 
             AND gl.is_cancelled = 0
             AND gl.account LIKE %(acc)s
-            AND gl.remarks NOT REGEXP "Cost Distribution"
+            AND gl.remarks NOT REGEXP "Cost Distribution" AND gl.remarks NOT REGEXP "CAPITALIZATION"
             {date_condition}
         GROUP BY gl.project
     """, {**params, "project_ids": project_ids}, as_dict=True)
