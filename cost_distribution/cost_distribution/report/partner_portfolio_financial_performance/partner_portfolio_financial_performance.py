@@ -265,3 +265,5 @@ def get_partners():
         filters={"designation": ["in", ["Partner", "CEO"]]},
         fields=["name", "employee_name"]
     )
+    frappe.msgprint(str(data))
+    return data
