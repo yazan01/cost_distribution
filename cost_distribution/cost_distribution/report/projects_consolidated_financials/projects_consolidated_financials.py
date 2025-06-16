@@ -162,3 +162,12 @@ def get_project_data(filters):
         data.append(row)
 
     return data
+
+@frappe.whitelist()
+def get_partner_list():
+    return frappe.get_all(
+        "Employee",
+        filters={"designation": ["in", ["Partner", "CEO"]]},
+        fields=["name", "employee_name"],
+        ignore_permissions=True
+    )
