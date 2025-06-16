@@ -67,7 +67,7 @@ def get_project_data(filters):
         "project_type_filter": project_type_filter,
         "project_status": project_status,
         "customer": customer
-    }, as_dict=True)
+    }, as_dict=True, ignore_permissions=True)
 
     project_ids = [p["project_id"] for p in projects]
     if not project_ids:
@@ -94,7 +94,7 @@ def get_project_data(filters):
             AND YEAR(gl.posting_date) IN (2023, 2024, 2025)
             AND gl.docstatus = 1 AND gl.is_cancelled = 0 AND gl.remarks NOT REGEXP "CAPITALIZATION"
         GROUP BY gl.project, YEAR(gl.posting_date)
-    """, {"project_ids": project_ids, 'act': '5%', 'rev': '4%'}, as_dict=True)
+    """, {"project_ids": project_ids, 'act': '5%', 'rev': '4%'}, as_dict=True, ignore_permissions=True)
 
     ctc_data = frappe.db.sql("""
         SELECT 
@@ -107,7 +107,7 @@ def get_project_data(filters):
             S.project IN %(project_ids)s 
             AND YEAR(D.posting_date) IN (2023, 2024, 2025)
         GROUP BY S.project, YEAR(D.posting_date)
-    """, {"project_ids": project_ids}, as_dict=True)
+    """, {"project_ids": project_ids}, as_dict=True, ignore_permissions=True)
 
     indirect_costs = frappe.db.sql("""
         SELECT 
@@ -125,7 +125,7 @@ def get_project_data(filters):
             AND gl.account LIKE %(acc)s
             AND gl.remarks NOT REGEXP "Cost Distribution" AND gl.remarks NOT REGEXP "CAPITALIZATION"
         GROUP BY gl.project, YEAR(gl.posting_date)
-    """, {"project_ids": project_ids, 'acc': '5%'}, as_dict=True)
+    """, {"project_ids": project_ids, 'acc': '5%'}, as_dict=True, ignore_permissions=True)
 
     # تحويل البيانات إلى قواميس للوصول السريع
     financial_dict = {(f["project_id"], f["year"]): f for f in financial_data}
