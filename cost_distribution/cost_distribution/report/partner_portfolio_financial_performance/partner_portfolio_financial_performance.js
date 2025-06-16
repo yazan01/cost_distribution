@@ -3,14 +3,15 @@ frappe.query_reports["Partner portfolio Financial Performance"] = {
         {
             "fieldname": "partner",
             "label": ("Partner"),
-            "fieldtype": "Link",
-            "options": "Employee",
-            "get_query": function() {
-                return {
-                    "filters": [
-                        ["designation", "in", ["Partner", "CEO"]]
-                    ]
-                };
+            "fieldtype": "Select",
+            "options": [],
+            "get_data": function () {
+                return frappe.call({
+                    method: "cost_distribution.cost_distribution.report.partner_portfolio_financial_performance.partner_portfolio_financial_performance.get_partners",
+                }).then(r => {
+                    const options = (r.message || []).map(p => p.name);
+                    frappe.query_report.set_filter_options("partner", options);
+                });
             }
         },
         {
