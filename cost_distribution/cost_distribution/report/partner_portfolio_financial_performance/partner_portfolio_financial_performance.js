@@ -5,13 +5,9 @@ frappe.query_reports["Partner portfolio Financial Performance"] = {
             "label": ("Partner"),
             "fieldtype": "Select",
             "options": [],
-            "get_data": function () {
-                return frappe.call({
-                    method: "cost_distribution.report.partner_portfolio_financial_performance.partner_portfolio_financial_performance.get_partners",
-                }).then(r => {
-                    const options = (r.message || []).map(p => p.name);
-                    frappe.query_report.set_filter_options("partner", options);
-                });
+            "on_change": function () {
+                // عندما يتغير الفلتر، يتم إعادة تحميل خيارات المشاريع
+                frappe.query_report.refresh();
             }
         },
         {
@@ -67,5 +63,30 @@ frappe.query_reports["Partner portfolio Financial Performance"] = {
             "fieldtype": "Check",
             "default": 0
         }
-    ]
+    ],
+
+    onload: function (report) {
+        // عند تحميل التقرير، قم بتحميل شركاء "Partner" أو "CEO" من الموظفين
+        frappe.call({
+            method: "frappe.client.get_list",
+            args: {
+                doctype: "Employee",
+                filters: {
+                    designation: ["in", ["Partner", "CEO"]]
+                },
+                fields: ["name", "employee_name"],
+                limit_page_length: 1000
+            },
+            callback: function (r) {
+                if (r.message) {
+                    let options = r.message.map(emp => ({
+                        label: emp.employee_name + " (" + emp.name + ")",
+                        value: emp.name
+                    }));
+                    // تعبئة فلتر الشريك بالخيارات
+                    frappe.query_report.set_filter_options("partner", options);
+                }
+            }
+        });
+    }
 };
