@@ -5,10 +5,6 @@ frappe.query_reports["Partner portfolio Financial Performance"] = {
             "label": ("Partner"),
             "fieldtype": "Select",
             "options": [],
-            "on_change": function () {
-                // عندما يتغير الفلتر، يتم إعادة تحميل خيارات المشاريع
-                frappe.query_report.refresh();
-            }
         },
         {
             "fieldname": "project_type",
@@ -66,7 +62,7 @@ frappe.query_reports["Partner portfolio Financial Performance"] = {
     ],
 
     onload: function (report) {
-        // عند تحميل التقرير، قم بتحميل شركاء "Partner" أو "CEO" من الموظفين
+        // تحميل الشركاء من السيرفر عند تحميل التقرير
         frappe.call({
             method: "frappe.client.get_list",
             args: {
@@ -75,16 +71,22 @@ frappe.query_reports["Partner portfolio Financial Performance"] = {
                     designation: ["in", ["Partner", "CEO"]]
                 },
                 fields: ["name", "employee_name"],
-                limit_page_length: 1000
+                limit_page_length: 100
             },
             callback: function (r) {
                 if (r.message) {
-                    let options = r.message.map(emp => ({
-                        label: emp.employee_name + " (" + emp.name + ")",
-                        value: emp.name
-                    }));
-                    // تعبئة فلتر الشريك بالخيارات
-                    frappe.query_report.set_filter_options("partner", options);
+                    const partner_filter = frappe.query_report.get_filter("partner");
+                    let options = [{ label: "Select Partner", value: "" }];
+
+                    r.message.forEach(row => {
+                        options.push({
+                            label: `${row.employee_name} (${row.name})`,
+                            value: row.name
+                        });
+                    });
+
+                    partner_filter.df.options = options;
+                    partner_filter.refresh();
                 }
             }
         });
