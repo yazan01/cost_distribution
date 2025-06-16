@@ -5,6 +5,7 @@ frappe.query_reports["Partner portfolio Financial Performance"] = {
             "label": ("Partner"),
             "fieldtype": "Select",
             "options": [],
+            "read_only": 0
         },
         {
             "fieldname": "project_type",
@@ -62,33 +63,56 @@ frappe.query_reports["Partner portfolio Financial Performance"] = {
     ],
 
     onload: function (report) {
-        // تحميل الشركاء من السيرفر عند تحميل التقرير
+        // أولاً، نحصل على الموظف المرتبط بالمستخدم الحالي
         frappe.call({
             method: "frappe.client.get_list",
             args: {
                 doctype: "Employee",
                 filters: {
-                    designation: ["in", ["Partner", "CEO"]]
+                    user_id: frappe.session.user
                 },
-                fields: ["name", "employee_name"],
-                limit_page_length: 100
+                fields: ["name", "employee_name", "designation"]
             },
-            callback: function (r) {
-                if (r.message) {
-                    const partner_filter = frappe.query_report.get_filter("partner");
-                    let options = [{ label: "Select Partner", value: "" }];
+            callback: function (res) {
+                let current_employee = res.message && res.message[0];
+                let is_partner = current_employee && current_employee.designation === "Partner";
 
-                    r.message.forEach(row => {
-                        options.push({
-                            label: `${row.employee_name} (${row.name})`,
-                            value: row.name
-                        });
-                    });
+                // تحميل الشركاء
+                frappe.call({
+                    method: "frappe.client.get_list",
+                    args: {
+                        doctype: "Employee",
+                        filters: {
+                            designation: ["in", ["Partner", "CEO"]]
+                        },
+                        fields: ["name", "employee_name"],
+                        limit_page_length: 100
+                    },
+                    callback: function (r) {
+                        if (r.message) {
+                            const partner_filter = frappe.query_report.get_filter("partner");
+                            let options = [];
 
-                    partner_filter.df.options = options;
-                    partner_filter.refresh();
-                }
+                            r.message.forEach(row => {
+                                options.push({
+                                    label: `${row.employee_name} (${row.name})`,
+                                    value: row.name
+                                });
+                            });
+
+                            partner_filter.df.options = options;
+                            partner_filter.refresh();
+
+                            if (is_partner) {
+                                // تعبئة الفلتر باسم الموظف الحالي وقفل الفلتر
+                                partner_filter.set_value(current_employee.name);
+                                partner_filter.toggle_enable(false); // make it read-only
+                            }
+                        }
+                    }
+                });
             }
         });
     }
+    
 };
