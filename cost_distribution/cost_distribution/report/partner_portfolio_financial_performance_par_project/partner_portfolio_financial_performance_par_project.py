@@ -233,3 +233,13 @@ def get_projects_by_partner(partner, txt="", project_type=None, portfolio_catego
 
     # إرجاع القائمة بصيغة MultiSelectList
     return [{"value": row.project, "description": row.project} for row in results]
+
+@frappe.whitelist()
+def get_partner_list():
+    # تجاوز الصلاحيات لكن نقيد النتائج فقط بالـ Partners و CEO
+    return frappe.get_all(
+        "Employee",
+        filters={"designation": ["in", ["Partner", "CEO"]]},
+        fields=["name", "employee_name"],
+        ignore_permissions=True
+    )
