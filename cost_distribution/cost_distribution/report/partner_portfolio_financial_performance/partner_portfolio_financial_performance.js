@@ -5,6 +5,7 @@ frappe.query_reports["Partner portfolio Financial Performance"] = {
             "label": ("Partner"),
             "fieldtype": "Select",
             "options": [],
+            "default": "",
             "read_only": 0
         },
         {
@@ -63,7 +64,7 @@ frappe.query_reports["Partner portfolio Financial Performance"] = {
     ],
 
     onload: function (report) {
-        // أولاً، نحصل على الموظف المرتبط بالمستخدم الحالي
+        // الحصول على الموظف الحالي
         frappe.call({
             method: "frappe.client.get_list",
             args: {
@@ -74,10 +75,10 @@ frappe.query_reports["Partner portfolio Financial Performance"] = {
                 fields: ["name", "employee_name", "designation"]
             },
             callback: function (res) {
-                let current_employee = res.message && res.message[0];
-                let is_partner = current_employee && current_employee.designation === "Partner";
+                const current_employee = res.message && res.message[0];
+                const is_partner = current_employee && current_employee.designation === "Partner";
 
-                // تحميل الشركاء
+                // جلب قائمة الشركاء
                 frappe.call({
                     method: "frappe.client.get_list",
                     args: {
@@ -85,30 +86,24 @@ frappe.query_reports["Partner portfolio Financial Performance"] = {
                         filters: {
                             designation: ["in", ["Partner", "CEO"]]
                         },
-                        fields: ["name", "employee_name"],
-                        limit_page_length: 100
+                        fields: ["name", "employee_name"]
                     },
                     callback: function (r) {
                         if (r.message) {
                             const partner_filter = frappe.query_report.get_filter("partner");
-                            let options = [];
-
-                            r.message.forEach(row => {
-                                options.push({
-                                    label: `${row.employee_name} (${row.name})`,
-                                    value: row.name
-                                });
-                            });
+                            let options = r.message.map(row => ({
+                                label: `${row.employee_name} (${row.name})`,
+                                value: row.name
+                            }));
 
                             partner_filter.df.options = options;
                             partner_filter.refresh();
 
                             if (is_partner) {
-                                // تعبئة الفلتر باسم الموظف الحالي وقفل الفلتر
+                                // جعل الفلتر read-only وتعيين القيمة تلقائيًا
+                                partner_filter.df.read_only = 1;
                                 partner_filter.set_value(current_employee.name);
-                                setTimeout(() => {
-                                    partner_filter.toggle_enable(false);
-                                }, 300);
+                                partner_filter.refresh();  // تحديث الحالة بعد التعديل
                             }
                         }
                     }
