@@ -44,92 +44,89 @@ def get_project_data(filters):
     project_status = filters.get("status")
     customer = filters.get("customer")
     
-    with frappe.flags.in_permission_query_override:
-        projects = frappe.db.sql("""
-            SELECT 
-                p.name AS project_id, 
-                p.project_name AS project_name_a, 
-                p.project_name_in_english AS project_name_e, 
-                p.project_type AS project_type,
-                p.status AS project_status,
-                p.customer AS client,
-                p.project_manager AS project_manager, 
-                p.project_manager_name AS project_manager_name
-            FROM `tabProject` p
-            WHERE 
-                (%(project_filter)s IS NULL OR p.name = %(project_filter)s)
-                AND (%(partner_filter)s IS NULL OR p.project_manager = %(partner_filter)s)
-                AND (%(project_type_filter)s IS NULL OR p.project_type = %(project_type_filter)s)
-                AND (%(project_status)s IS NULL OR p.status = %(project_status)s)
-                AND (%(customer)s IS NULL OR p.customer = %(customer)s)
-        """, {
-            "project_filter": project_filter,
-            "partner_filter": partner_filter,
-            "project_type_filter": project_type_filter,
-            "project_status": project_status,
-            "customer": customer
-        }, as_dict=True)
+    
+    projects = frappe.db.sql("""
+        SELECT 
+            p.name AS project_id, 
+            p.project_name AS project_name_a, 
+            p.project_name_in_english AS project_name_e, 
+            p.project_type AS project_type,
+            p.status AS project_status,
+            p.customer AS client,
+            p.project_manager AS project_manager, 
+            p.project_manager_name AS project_manager_name
+        FROM `tabProject` p
+        WHERE 
+            (%(project_filter)s IS NULL OR p.name = %(project_filter)s)
+            AND (%(partner_filter)s IS NULL OR p.project_manager = %(partner_filter)s)
+            AND (%(project_type_filter)s IS NULL OR p.project_type = %(project_type_filter)s)
+            AND (%(project_status)s IS NULL OR p.status = %(project_status)s)
+            AND (%(customer)s IS NULL OR p.customer = %(customer)s)
+    """, {
+        "project_filter": project_filter,
+        "partner_filter": partner_filter,
+        "project_type_filter": project_type_filter,
+        "project_status": project_status,
+        "customer": customer
+    }, as_dict=True)
 
     project_ids = [p["project_id"] for p in projects]
     if not project_ids:
         return []
     
-    with frappe.flags.in_permission_query_override:
-        financial_data = frappe.db.sql("""
-            SELECT 
-                gl.project AS project_id,
-                YEAR(gl.posting_date) AS year,
-                SUM(CASE WHEN gl.account LIKE %(act)s AND gl.company = 'iValueJOR' THEN gl.debit * 5.3 - gl.credit * 5.3 
-                         WHEN gl.account LIKE %(act)s AND gl.company = 'iValueUAE' THEN gl.debit * 1.02 - gl.credit * 1.02 
-                         WHEN gl.account LIKE %(act)s AND gl.company = 'iValue KSA' THEN gl.debit - gl.credit ELSE 0 END)
-                -SUM(CASE WHEN gl.account LIKE %(rev)s AND gl.company != p.company AND gl.company = 'iValueJOR' THEN gl.credit * 5.3 - gl.debit * 5.3
-                         WHEN gl.account LIKE %(rev)s AND gl.company != p.company AND gl.company = 'iValueUAE' THEN gl.credit * 1.02 - gl.debit * 1.02
-                         WHEN gl.account LIKE %(rev)s AND gl.company != p.company AND gl.company = 'iValue KSA' THEN gl.credit - gl.debit ELSE 0 END)
-                         AS actual_cost,
-                SUM(CASE WHEN gl.account LIKE %(rev)s AND gl.company = p.company AND gl.company = 'iValueJOR' THEN gl.credit * 5.3 - gl.debit * 5.3
-                         WHEN gl.account LIKE %(rev)s AND gl.company = p.company AND gl.company = 'iValueUAE' THEN gl.credit * 1.02 - gl.debit * 1.02
-                         WHEN gl.account LIKE %(rev)s AND gl.company = p.company AND gl.company = 'iValue KSA' THEN gl.credit - gl.debit ELSE 0 END) AS revenue
-            FROM `tabGL Entry` gl
-            JOIN `tabProject` p ON gl.project = p.name
-            WHERE 
-                gl.project IN %(project_ids)s 
-                AND YEAR(gl.posting_date) IN (2023, 2024, 2025)
-                AND gl.docstatus = 1 AND gl.is_cancelled = 0 AND gl.remarks NOT REGEXP "CAPITALIZATION"
-            GROUP BY gl.project, YEAR(gl.posting_date)
-        """, {"project_ids": project_ids, 'act': '5%', 'rev': '4%'}, as_dict=True)
+    financial_data = frappe.db.sql("""
+        SELECT 
+            gl.project AS project_id,
+            YEAR(gl.posting_date) AS year,
+            SUM(CASE WHEN gl.account LIKE %(act)s AND gl.company = 'iValueJOR' THEN gl.debit * 5.3 - gl.credit * 5.3 
+                    WHEN gl.account LIKE %(act)s AND gl.company = 'iValueUAE' THEN gl.debit * 1.02 - gl.credit * 1.02 
+                    WHEN gl.account LIKE %(act)s AND gl.company = 'iValue KSA' THEN gl.debit - gl.credit ELSE 0 END)
+            -SUM(CASE WHEN gl.account LIKE %(rev)s AND gl.company != p.company AND gl.company = 'iValueJOR' THEN gl.credit * 5.3 - gl.debit * 5.3
+                    WHEN gl.account LIKE %(rev)s AND gl.company != p.company AND gl.company = 'iValueUAE' THEN gl.credit * 1.02 - gl.debit * 1.02
+                    WHEN gl.account LIKE %(rev)s AND gl.company != p.company AND gl.company = 'iValue KSA' THEN gl.credit - gl.debit ELSE 0 END)
+                    AS actual_cost,
+            SUM(CASE WHEN gl.account LIKE %(rev)s AND gl.company = p.company AND gl.company = 'iValueJOR' THEN gl.credit * 5.3 - gl.debit * 5.3
+                    WHEN gl.account LIKE %(rev)s AND gl.company = p.company AND gl.company = 'iValueUAE' THEN gl.credit * 1.02 - gl.debit * 1.02
+                    WHEN gl.account LIKE %(rev)s AND gl.company = p.company AND gl.company = 'iValue KSA' THEN gl.credit - gl.debit ELSE 0 END) AS revenue
+        FROM `tabGL Entry` gl
+        JOIN `tabProject` p ON gl.project = p.name
+        WHERE 
+            gl.project IN %(project_ids)s 
+            AND YEAR(gl.posting_date) IN (2023, 2024, 2025)
+            AND gl.docstatus = 1 AND gl.is_cancelled = 0 AND gl.remarks NOT REGEXP "CAPITALIZATION"
+        GROUP BY gl.project, YEAR(gl.posting_date)
+    """, {"project_ids": project_ids, 'act': '5%', 'rev': '4%'}, as_dict=True)
     
-    with frappe.flags.in_permission_query_override:
-        ctc_data = frappe.db.sql("""
-            SELECT 
-                S.project AS project_id,
-                YEAR(D.posting_date) AS year,
-                ROUND(SUM(S.total_cost_of_project), 2) AS ctc_cost
-            FROM `tabProject Summary CTC` S
-            JOIN `tabCTC Distribution` D ON S.parent = D.name
-            WHERE 
-                S.project IN %(project_ids)s 
-                AND YEAR(D.posting_date) IN (2023, 2024, 2025)
-            GROUP BY S.project, YEAR(D.posting_date)
-        """, {"project_ids": project_ids}, as_dict=True)
+    ctc_data = frappe.db.sql("""
+        SELECT 
+            S.project AS project_id,
+            YEAR(D.posting_date) AS year,
+            ROUND(SUM(S.total_cost_of_project), 2) AS ctc_cost
+        FROM `tabProject Summary CTC` S
+        JOIN `tabCTC Distribution` D ON S.parent = D.name
+        WHERE 
+            S.project IN %(project_ids)s 
+            AND YEAR(D.posting_date) IN (2023, 2024, 2025)
+        GROUP BY S.project, YEAR(D.posting_date)
+    """, {"project_ids": project_ids}, as_dict=True)
     
-    with frappe.flags.in_permission_query_override:
-        indirect_costs = frappe.db.sql("""
-            SELECT 
-                gl.project AS project_id,
-                YEAR(gl.posting_date) AS year,
-                SUM((gl.debit - gl.credit) * afc.currency) AS indirect_cost
-            FROM `tabAccounts For CTC` AS afc
-            JOIN `tabGL Entry` AS gl ON afc.account = gl.account 
-            WHERE 
-                gl.project IN %(project_ids)s 
-                AND YEAR(gl.posting_date) IN (2023, 2024, 2025)
-                AND afc.type = 'Indirect' 
-                AND gl.docstatus = 1 
-                AND gl.is_cancelled = 0 
-                AND gl.account LIKE %(acc)s
-                AND gl.remarks NOT REGEXP "Cost Distribution" AND gl.remarks NOT REGEXP "CAPITALIZATION"
-            GROUP BY gl.project, YEAR(gl.posting_date)
-        """, {"project_ids": project_ids, 'acc': '5%'}, as_dict=True)
+    indirect_costs = frappe.db.sql("""
+        SELECT 
+            gl.project AS project_id,
+            YEAR(gl.posting_date) AS year,
+            SUM((gl.debit - gl.credit) * afc.currency) AS indirect_cost
+        FROM `tabAccounts For CTC` AS afc
+        JOIN `tabGL Entry` AS gl ON afc.account = gl.account 
+        WHERE 
+            gl.project IN %(project_ids)s 
+            AND YEAR(gl.posting_date) IN (2023, 2024, 2025)
+            AND afc.type = 'Indirect' 
+            AND gl.docstatus = 1 
+            AND gl.is_cancelled = 0 
+            AND gl.account LIKE %(acc)s
+            AND gl.remarks NOT REGEXP "Cost Distribution" AND gl.remarks NOT REGEXP "CAPITALIZATION"
+        GROUP BY gl.project, YEAR(gl.posting_date)
+    """, {"project_ids": project_ids, 'acc': '5%'}, as_dict=True)
 
     # تحويل البيانات إلى قواميس للوصول السريع
     financial_dict = {(f["project_id"], f["year"]): f for f in financial_data}
