@@ -100,7 +100,7 @@ class CTCDistribution(Document):
                     FROM 
                         `tabLevel Rate`
                     WHERE 
-                        year = %s
+                        year = %s AND project IS NULL
                     ) AS lr
                 ON 
                     des.custom_level = lr.parent
