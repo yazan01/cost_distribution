@@ -9,23 +9,10 @@ frappe.query_reports["Projects Consolidated Financials"] = {
 		{
 			"fieldname": "partner",
 			"label": __("Project Manager"),
-			"fieldtype": "Link",
-			"options": "Employee",
-			get_data: function(txt) {
-				return frappe.db.get_list('Employee', {
-					fields: ['name', 'employee_name'],
-					filters: {designation: 'Partner'}
-				}).then(function(results) {
-					// Format the results as an array of {value, label} objects
-					let partners = results.map(function(employee) {
-						return {
-							"value": employee.name,
-							"label": employee.employee_name
-						};
-					});
-					return partners;
-				});
-			}
+			"fieldtype": "Select",
+			"options": [],
+			"default": "",
+			"reqd": 0
 		},
 		{
 			"fieldname": "project_type",
@@ -63,6 +50,44 @@ frappe.query_reports["Projects Consolidated Financials"] = {
 	},
 
 	onload: function(report) {
+		// تحميل بيانات الموظف الحالي
+		frappe.call({
+			method: "frappe.client.get_list",
+			args: {
+				doctype: "Employee",
+				filters: {
+					user_id: frappe.session.user
+				},
+				fields: ["name", "employee_name", "designation"]
+			},
+			callback: function (res) {
+				const current_employee = res.message && res.message[0];
+				const is_partner = current_employee && ["Partner", "CEO"].includes(current_employee.designation);
+
+				// تحميل قائمة الشركاء من السيرفر
+				frappe.call({
+					method: "cost_distribution.cost_distribution.report.projects_consolidated_financials.projects_consolidated_financials.get_partner_list",
+					callback: function (r) {
+						const partner_filter = frappe.query_report.get_filter("partner");
+						if (r.message) {
+							let options = r.message.map(emp => ({
+								label: `${emp.employee_name} (${emp.name})`,
+								value: emp.name
+							}));
+							partner_filter.df.options = options;
+
+							// تعبئة الفلتر تلقائيًا إذا كان المستخدم Partner
+							if (is_partner) {
+								partner_filter.df.read_only = 1;
+								partner_filter.set_value(current_employee.name);
+							}
+							partner_filter.refresh();
+						}
+					}
+				});
+			}
+		});
+		
 		// Add click event
 		report.page.wrapper.on('click', '.currency-cell', function () {
 			const columnName = $(this).data('column');
