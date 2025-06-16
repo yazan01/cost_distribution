@@ -106,7 +106,9 @@ frappe.query_reports["Partner portfolio Financial Performance"] = {
                             if (is_partner) {
                                 // تعبئة الفلتر باسم الموظف الحالي وقفل الفلتر
                                 partner_filter.set_value(current_employee.name);
-                                partner_filter.toggle_enable(false); // make it read-only
+                                setTimeout(() => {
+                                    partner_filter.toggle_enable(false);
+                                }, 300);
                             }
                         }
                     }
