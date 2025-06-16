@@ -44,6 +44,7 @@ def get_project_data(filters):
     project_status = filters.get("status")
     customer = filters.get("customer")
     
+    frappe.flags.ignore_permissions = True
     
     projects = frappe.db.sql("""
         SELECT 
@@ -161,7 +162,7 @@ def get_project_data(filters):
             "profit_loss_actual": total_revenue - total_actual
         }
         data.append(row)
-
+        frappe.flags.ignore_permissions = False
     return data
 
 @frappe.whitelist()
