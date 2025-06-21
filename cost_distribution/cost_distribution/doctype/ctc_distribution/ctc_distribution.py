@@ -7,17 +7,17 @@ from frappe import _
 from frappe.utils import flt, cstr
 from datetime import datetime, timedelta
 
-
-
 class CTCDistribution(Document):
     def validate(self):
         """Validates and processes salary slips and costing summary."""
         self.validate_fields()
         self.set_salary_slip_and_rate1()
         self.create_costing_summary()
+        # Apply project-specific CTC rates during validation
+        self.apply_project_specific_ctc_rates()
 
     def on_submit(self):
-        """self.create_costing_summary()"""
+        """Validate projects for employees with no timesheet"""
         for timesheet in self.add_project_for_employee_no_timesheet:
             if not timesheet.project:
                 frappe.throw(_("Please add project for employee {0}").format(timesheet.employee))
@@ -32,13 +32,9 @@ class CTCDistribution(Document):
         if missing_fields:
             frappe.throw(_("Please set the following fields: {0}").format(", ".join(missing_fields)))
 
-        
-
     def set_salary_slip_and_rate1(self):
-
         from_date_obj = datetime.strptime(self.from_date, '%Y-%m-%d')
         year = from_date_obj.year
-        
         
         start_date = datetime.strptime(self.from_date, '%Y-%m-%d')
         end_date = datetime.strptime(self.to_date, '%Y-%m-%d')
@@ -50,7 +46,6 @@ class CTCDistribution(Document):
             if current_date.weekday() not in (4, 5):
                 number_of_days += 1
             current_date += timedelta(days=1)
-        
 
         """Fetches and sets CTC data based on CTC distribution type."""
         if self.distribution_type == 'CTC Distribution':
@@ -122,7 +117,6 @@ class CTCDistribution(Document):
             """,
                 (self.company, self.to_date, self.from_date, year, self.from_date, self.to_date), as_dict=True,
             )
-            
 
             result2 = frappe.db.sql(
                 """
@@ -184,16 +178,15 @@ class CTCDistribution(Document):
             employee_with_no_ctc = []
 
             for row in result:
-            	if flt(row.get('ctc')) == 0:
+                if flt(row.get('ctc')) == 0:
                     employee_with_no_ctc.append(row.get('employee'))
 
             for row in result2:
-            	if flt(row.get('ctc')) == 0:
+                if flt(row.get('ctc')) == 0:
                     employee_with_no_ctc.append(row.get('employee'))
             
             if employee_with_no_ctc:
                 frappe.throw(_("Please set CTC for the following employees: {0}").format(", ".join(employee_with_no_ctc)))
-            
             
             for row in result:
                 if row.get('total_hours') == 0 and not any(entry.get('employee') == row.get('employee') for entry in self.get('add_project_for_employee_no_timesheet', []) ):
@@ -202,14 +195,12 @@ class CTCDistribution(Document):
                         {"employee": row.get('employee')}
                     )
 
-            
             for row in result2:
-            	if row.get('total_hours') == 0 and not any(entry.get('employee') == row.get('employee') for entry in self.get('add_project_for_employee_no_timesheet', []) ):
+                if row.get('total_hours') == 0 and not any(entry.get('employee') == row.get('employee') for entry in self.get('add_project_for_employee_no_timesheet', []) ):
                     self.append(
                         "add_project_for_employee_no_timesheet",
                         {"employee": row.get('employee')}
                     )
-                    
             
             for row in result:
                 self.append('employee_ctc_data', {
@@ -232,16 +223,68 @@ class CTCDistribution(Document):
                     'ctc': flt(row.get('ctc')),
                     'total_hours': row.get('total_hours'),
                 })
-                
+
+    def apply_project_specific_ctc_rates(self):
+        """Apply project-specific CTC rates and update costs accordingly"""
+        if not self.posting_date:
+            return
+            
+        posting_date = frappe.utils.getdate(self.posting_date)
+        fiscal_year = str(posting_date.year)
+        
+        updated = False
+        results = []
+
+        for emp_row in self.employee_ctc_data:
+            if emp_row.employment_type != "Permanent":
+                continue
+
+            employee = emp_row.employee
+            level = emp_row.level
+
+            for cost_row in self.costing_summary:
+                if cost_row.employee != employee:
+                    continue
+
+                project = cost_row.project
+
+                try:
+                    level_doc = frappe.get_doc("Levels", level)
+                except:
+                    continue
+
+                matched_ctc = None
+                for rate_row in level_doc.rate:
+                    if rate_row.year == fiscal_year and rate_row.project == project:
+                        matched_ctc = rate_row.ctc
+                        break
+
+                if matched_ctc is not None:
+                    new_cost = (matched_ctc * cost_row.perc_distribution) / 100
+                    cost_row.total_cost_of_project = new_cost
+                    results.append(
+                        f"Employee: {employee} | Project: {project} | Level: {level} | CTC: {matched_ctc} | New Cost: {new_cost}"
+                    )
+                    updated = True
+
+        if updated:
+            # Update Amount (sum of all total_cost_of_project)
+            self.amount = sum(row.total_cost_of_project for row in self.costing_summary if row.total_cost_of_project)
+
+            # Update employee_ctc_data.ctc per employee
+            for emp_row in self.employee_ctc_data:
+                emp = emp_row.employee
+                total = sum(row.total_cost_of_project for row in self.costing_summary if row.employee == emp)
+                emp_row.ctc = total
+            
+            if results and frappe.flags.in_request:
+                frappe.msgprint(f"Applied project-specific CTC rates for {len(results)} entries")
+
     @frappe.whitelist()
     def create_costing_summary(self):
         """Creates a costing summary for the document."""
         if self.distribution_type not in ['Employee', 'CTC Distribution']:
             return
-
-        """for timesheet in self.add_project_for_employee_no_timesheet:
-            if not timesheet.project:
-                frappe.throw(_("Please add project for employee {0}").format(timesheet.employee))"""
 
         self.costing_summary = []
         total_cost_of_project = 0
@@ -269,71 +312,6 @@ class CTCDistribution(Document):
                         total_cost_of_project += project.total_cost_of_project
         
         self.amount = total_cost_of_project
-        
-
-"""
-    @frappe.whitelist()
-    def create_journal_entry(self):
-        self.validate()
-        precision = frappe.get_precision("Journal Entry Account", "debit_in_account_currency")
-        jv = frappe.new_doc("Journal Entry")
-        jv.company = self.company
-        jv.posting_date = self.posting_date
-        jv.user_remark = 'JV Created VIA {0}'.format(frappe.get_desk_link('Cost Distribution', self.name))
-
-        jv.append('accounts', {
-			'account': self.credit_account,
-			'credit_in_account_currency': flt(self.amount, precision),
-            		'cost_center': self.default_cost_center
-		})
-
-        if not self.costing_summary:
-            frappe.throw('Costing Summary Table is Empty')
-
-        gosi_debit_sum = 0
-        if self.distribution_type in ['Employee', 'CTC Distribution']:
-            for d in self.costing_summary:
-                d.debit = flt(d.total_cost_of_project, precision)
-
-            for d in self.costing_summary:
-                d.gosi_debit = flt(d.gosi_amount, precision)
-
-            gosi_debit_sum = sum([d.gosi_debit for d in self.costing_summary])
-
-            gosi_debit_sum = sum([d.gosi_debit for d in self.costing_summary])
-		
-
-		##### if there's rounding difference in debit then appending in last row
-        diff = self.amount - sum([d.debit for d in self.costing_summary]) - gosi_debit_sum
-        if diff:
-            for d in self.costing_summary:
-                if d.idx == len(self.costing_summary):
-                    d.debit += diff
-
-        for d in self.costing_summary:
-            jv.append('accounts', {
-				'party': d.employee if self.distribution_type in ['Employee', 'CTC Distribution'] else None,
-				'party_type': 'Employee' if self.distribution_type in ['Employee', 'CTC Distribution'] else None,
-				'project': d.project,
-				'cost_center': d.cost_center,
-				'account': self.debit_account,
-				'debit_in_account_currency': d.debit
-			})
-
-            if d.gosi_amount and self.distribution_type in ['Employee', 'CTC Distribution']:
-                jv.append('accounts', {
-					'party': d.employee if self.distribution_type in ['Employee', 'CTC Distribution'] else None,
-					'party_type': 'Employee' if self.distribution_type in ['Employee', 'CTC Distribution'] else None,
-					'project': d.project,
-					'cost_center': d.cost_center,
-					'account': self.gosi_debit_account,
-					'debit_in_account_currency': d.gosi_debit
-				})
-
-        jv.save()
-        self.db_set('journal_entry', jv.name)
-"""
-
 
 @frappe.whitelist()
 def get_time_sheet_summary(salary_data, cost_dist_doc):
@@ -440,4 +418,3 @@ def get_time_sheet_summary(salary_data, cost_dist_doc):
             project_list[-1]['perc_distribution'] += diff
 
     return {"project_list": project_list}
-
