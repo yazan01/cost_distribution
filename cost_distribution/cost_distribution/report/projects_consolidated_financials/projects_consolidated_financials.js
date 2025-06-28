@@ -62,7 +62,7 @@ frappe.query_reports["Projects Consolidated Financials"] = {
 			},
 			callback: function (res) {
 				const current_employee = res.message && res.message[0];
-				const is_partner = current_employee && ["Partner", "CEO"].includes(current_employee.designation);
+				const is_partner = current_employee && ["Partner"].includes(current_employee.designation);
 
 				// تحميل قائمة الشركاء من السيرفر
 				frappe.call({
