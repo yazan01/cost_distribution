@@ -6,12 +6,11 @@ def execute(filters):
     columns = [
         {"label": "Period", "fieldname": "period", "fieldtype": "Data", "width": 120},
         {"label": "CTC Cost", "fieldname": "total_ctc", "fieldtype": "Float", "width": 200},
-        {"label": "Actual Cost", "fieldname": "total_actual", "fieldtype": "Float", "width": 200},
+        #{"label": "Actual Cost", "fieldname": "total_actual", "fieldtype": "Float", "width": 200},
         {"label": "Revenue", "fieldname": "total_revenue", "fieldtype": "Float", "width": 200},
         {"label": "Profit AND Loss on CTC Cost", "fieldname": "profit_loss_ctc", "fieldtype": "Float", "width": 240},
-        {"label": "Profit AND Loss on Actual Cost", "fieldname": "profit_loss_actual", "fieldtype": "Float", "width": 240},
+        #{"label": "Profit AND Loss on Actual Cost", "fieldname": "profit_loss_actual", "fieldtype": "Float", "width": 240},
     ]
-
     data = get_project_data(filters)
     return columns, data
 
