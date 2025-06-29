@@ -21,6 +21,8 @@ def get_project_data(filters):
     portfolio_category_filter = filters.get("portfolio_category")
     view_filter = filters.get("view")
     aggregated_filter = filters.get("aggregated")
+    persentage = filters.get("persentage")
+    
     
     # Convert project_filter list to tuple for SQL IN clause; if None or empty, use empty tuple
     if project_filter:
@@ -65,8 +67,10 @@ def get_project_data(filters):
     all_projects = frappe.db.sql(query, params, as_dict=True)
 
 
-    
-    project_percentages = {p["project_id"]: float(p["percentage"] or 0) / 100 for p in all_projects}
+    if persentage:
+        project_percentages = {p["project_id"]: float(p["percentage"] or 0) / 100 for p in all_projects}
+    else:
+        project_percentages = {p["project_id"]: float(100) / 100 for p in all_projects}
     project_ids = list(project_percentages.keys())
 
     if not project_ids:
