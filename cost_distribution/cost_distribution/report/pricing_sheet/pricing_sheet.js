@@ -4,8 +4,8 @@ frappe.query_reports["Pricing Sheet"] = {
       fieldname: "project",
       label: "Project",
       fieldtype: "Link",
-      option: "Project"
+      options: "Project",
       reqd: 1
     }
-  ]  
+  ]
 };
