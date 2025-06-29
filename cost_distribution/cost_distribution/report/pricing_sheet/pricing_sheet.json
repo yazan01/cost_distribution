@@ -15,7 +15,7 @@
  "name": "Pricing Sheet",
  "owner": "Administrator",
  "prepared_report": 0,
- "ref_doctype": "Timesheet",
+ "ref_doctype": "Levels",
  "report_name": "Pricing Sheet",
  "report_type": "Script Report",
  "roles": [
