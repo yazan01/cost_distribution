@@ -8,7 +8,7 @@ def execute(filters=None):
     raw_data = []
 
     if project:
-        conditions = f"AND project = '{project}'"
+        conditions = f"AND p.project = '{project}'"
         raw_data = frappe.db.sql(f"""
             SELECT  
                 cd.posting_date,
@@ -41,11 +41,12 @@ def execute(filters=None):
                 AND YEAR(cd.posting_date) = lr_null.`year`
                 AND lr_null.project IS NULL
             WHERE 
-            cd.docstatus = 1
-            AND e.employment_type = "Permanent"
-            {conditions}
+                cd.docstatus = 1
+                AND e.employment_type = "Permanent"
+                {conditions}
         """, as_dict=True)
 
+    # تجميع النتائج حسب project/employee/level/ctc
     grouped = defaultdict(lambda: {
         "project": "",
         "employee": "",
@@ -66,11 +67,11 @@ def execute(filters=None):
         group["ctc"] = row.ctc
         group["months"].append(row.posting_date.strftime("%Y-%m"))  # جمع التاريخ بالشهر فقط
 
+    # تحويل dict إلى list مع months مفصولة بفواصل
     final_data = []
     for entry in grouped.values():
         entry["months"] = ", ".join(sorted(set(entry["months"])))
         final_data.append(entry)
-    
 
     columns = [
         {"label": "Project", "fieldname": "project", "fieldtype": "Link", "options": "Project", "width": 180},
