@@ -63,7 +63,7 @@ frappe.query_reports["For Partner portfolio Financial Performance"] = {
         },
         {
             "fieldname": "persentage",
-            "label": ("Persentage"),
+            "label": ("Partner Persentage"),
             "fieldtype": "Check",
             "default": 1
         }
