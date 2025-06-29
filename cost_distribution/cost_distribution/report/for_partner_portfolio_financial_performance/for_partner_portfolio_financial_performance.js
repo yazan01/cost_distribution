@@ -60,6 +60,12 @@ frappe.query_reports["For Partner portfolio Financial Performance"] = {
             "label": ("Aggregated"),
             "fieldtype": "Check",
             "default": 0
+        },
+        {
+            "fieldname": "persentage",
+            "label": ("Persentage"),
+            "fieldtype": "Check",
+            "default": 1
         }
     ],
 
