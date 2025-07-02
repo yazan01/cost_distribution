@@ -16,6 +16,7 @@ def execute(filters=None):
                 e.employee_name,
                 e.`level`,
                 p.project,
+                p.total_cost_of_project AS total
                 COALESCE(lr_match.ctc, lr_null.ctc) AS ctc
             FROM 
                 `tabCTC Distribution` AS cd
@@ -53,7 +54,8 @@ def execute(filters=None):
         "employee_name": "",
         "level": "",
         "ctc": 0.0,
-        "months": []
+        "months": [],
+        "total_actual_ctc": 0.0
     })
 
     for row in raw_data:
@@ -66,6 +68,7 @@ def execute(filters=None):
         group["level"] = row.level
         group["ctc"] = row.ctc
         group["months"].append(row.posting_date.strftime("%Y-%m"))  # جمع التاريخ بالشهر فقط
+        group["total_actual_ctc"] = group["total_actual_ctc"] + row.total
 
     # تحويل dict إلى list مع months مفصولة بفواصل
     final_data = []
@@ -79,7 +82,8 @@ def execute(filters=None):
         {"label": "Employee Name", "fieldname": "employee_name", "fieldtype": "Data", "width": 250},
         {"label": "Level", "fieldname": "level", "fieldtype": "Data", "width": 180},
         {"label": "CTC", "fieldname": "ctc", "fieldtype": "Float", "width": 180},
-        {"label": "Months", "fieldname": "months", "fieldtype": "Data", "width": 250}
+        {"label": "Months", "fieldname": "months", "fieldtype": "Data", "width": 250},
+        {"label": "Total Actual CTC", "fieldname": "total_actual_ctc", "fieldtype": "Float", "width": 180}
     ]
 
     return columns, final_data
