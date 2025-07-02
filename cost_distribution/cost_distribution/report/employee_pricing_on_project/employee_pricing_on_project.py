@@ -16,7 +16,7 @@ def execute(filters=None):
                 e.employee_name,
                 e.`level`,
                 p.project,
-                p.total_cost_of_project AS total
+                p.total_cost_of_project AS total,
                 COALESCE(lr_match.ctc, lr_null.ctc) AS ctc
             FROM 
                 `tabCTC Distribution` AS cd
