@@ -11,6 +11,7 @@ def execute(filters):
         {"label": "Project Type", "fieldname": "project_type", "fieldtype": "Data", "width": 150},
         {"label": "Project Status", "fieldname": "project_status", "fieldtype": "Data", "width": 150},
         {"label": "Client", "fieldname": "client", "fieldtype": "Data", "width": 250},
+        {"label": "Sales Order Ammount", "fieldname": "total_ctc", "fieldtype": "Float", "width": 200},
         {"label": "CTC Cost", "fieldname": "total_ctc", "fieldtype": "Float", "width": 200},
         {"label": "Revenue", "fieldname": "total_revenue", "fieldtype": "Float", "width": 200},
         {"label": "Profit AND Loss on CTC Cost", "fieldname": "profit_loss_ctc", "fieldtype": "Float", "width": 240},
