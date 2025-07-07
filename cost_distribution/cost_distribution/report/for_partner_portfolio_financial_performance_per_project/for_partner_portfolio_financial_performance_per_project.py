@@ -11,7 +11,7 @@ def execute(filters):
         {"label": "Project Type", "fieldname": "project_type", "fieldtype": "Data", "width": 150},
         {"label": "Project Status", "fieldname": "project_status", "fieldtype": "Data", "width": 150},
         {"label": "Client", "fieldname": "client", "fieldtype": "Data", "width": 250},
-        {"label": "Sales Order Ammount", "fieldname": "total_ctc", "fieldtype": "Float", "width": 200},
+        {"label": "Sales Order Amount", "fieldname": "sales_order_amount", "fieldtype": "Float", "width": 200},
         {"label": "CTC Cost", "fieldname": "total_ctc", "fieldtype": "Float", "width": 200},
         {"label": "Revenue", "fieldname": "total_revenue", "fieldtype": "Float", "width": 200},
         {"label": "Profit AND Loss on CTC Cost", "fieldname": "profit_loss_ctc", "fieldtype": "Float", "width": 240},
@@ -69,9 +69,11 @@ def get_project_data(filters):
             pro.project_name_in_english AS project_name_e, 
             pro.project_type AS project_type,
             pro.status AS project_status,
-            pro.customer AS client
+            pro.customer AS client,
+            so.total AS sales_order_amount
         FROM `tabPartners Percentage` pp
         JOIN `tabProject` pro ON pro.name = pp.parent
+        JOIN `tabSales Order` so ON so.project = pro.name
         WHERE {where_sql}
     """, params, as_dict=True)
 
@@ -189,6 +191,7 @@ def get_project_data(filters):
             "project_type": project.project_type,
             "project_status": project.project_status,
             "client": project.client,
+            "sales_order_amount": round((project.sales_order_amount * percentage), 2),
             "total_ctc": round(total_ctc, 2),
             "total_actual": round(actual, 2),
             "total_revenue": round(revenue, 2),
