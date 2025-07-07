@@ -84,6 +84,13 @@
       "label": "CTC",
       "reqd": 1,
       "in_list_view": 1
+    },
+    {
+      "fieldname": "billing",
+      "fieldtype": "Float",
+      "label": "Billing",
+      "reqd": 1,
+      "in_list_view": 1
     }
     
   ],
