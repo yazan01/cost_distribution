@@ -19,7 +19,9 @@ def execute(filters):
     ]
 
     data = get_project_data(filters)
-    return columns, data
+
+    add_total_row = 0 if filters.get("aggregated") else 1
+    return columns, data, add_total_row
 
 def get_project_data(filters):
     project_filter = filters.get("project")
