@@ -145,6 +145,8 @@ def get_project_data(filters):
 
     result = OrderedDict()
 
+    t_total_ctc = t_total_revenue = 0.0
+    
     for key in sorted(all_keys):
         project_id, month_year = key
         percentage = project_percentages.get(project_id, 0)
@@ -160,6 +162,10 @@ def get_project_data(filters):
         total_ctc *= percentage
         actual_cost *= percentage
         revenue *= percentage
+
+        #//////////////////
+        t_total_ctc += total_ctc
+        t_total_revenue += revenue
 
         result[key] = {
             "period": month_year,
@@ -223,6 +229,14 @@ def get_project_data(filters):
             item["total_revenue"] = round(cumulative_revenue, 2)
             item["profit_loss_ctc"] = round(cumulative_profit_ctc, 2)
             item["profit_loss_actual"] = round(cumulative_profit_actual, 2)
+
+    total = {
+        "period": "Total",
+        "total_ctc": t_total_ctc,
+        "total_revenue": t_total_revenue,
+        "profit_loss_ctc": t_total_revenue - t_total_ctc
+    }
+    sorted_data.append(total)
 
     return sorted_data
 
