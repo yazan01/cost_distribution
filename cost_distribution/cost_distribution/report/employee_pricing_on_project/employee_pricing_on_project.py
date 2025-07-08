@@ -6,6 +6,7 @@ def execute(filters=None):
     project = filters.get("project")
 
     raw_data = []
+    raw_data_2 = []
 
     if project:
         conditions = f"AND p.project = '{project}'"
@@ -47,6 +48,32 @@ def execute(filters=None):
                 {conditions}
         """, as_dict=True)
 
+         raw_data_2 = frappe.db.sql(f"""
+            SELECT  
+                cd.posting_date,
+                e.employee,
+                e.employee_name,
+                COALESCE(e.`level`, 'null') AS level,
+                p.project,
+                p.total_cost_of_project AS total,
+                0 AS ctc
+            FROM 
+                `tabCTC Distribution` AS cd
+            LEFT JOIN 
+                `tabEmployee Cost Table CTC` AS e
+            ON 
+                cd.name = e.parent
+            LEFT JOIN 
+                `tabProject Summary CTC` AS p
+            ON 
+                cd.name = p.parent
+                AND e.employee = p.employee
+            WHERE 
+                cd.docstatus = 1
+                AND e.employment_type = "Subcontract"
+                {conditions}
+        """, as_dict=True)
+
     # تجميع النتائج حسب project/employee/level/ctc
     grouped = defaultdict(lambda: {
         "project": "",
@@ -59,6 +86,18 @@ def execute(filters=None):
     })
 
     for row in raw_data:
+        key = (row.project, row.employee, row.level, row.ctc)
+        group = grouped[key]
+
+        group["project"] = row.project
+        group["employee"] = row.employee
+        group["employee_name"] = row.employee_name
+        group["level"] = row.level
+        group["ctc"] = row.ctc
+        group["months"].append(row.posting_date.strftime("%Y-%m"))  # جمع التاريخ بالشهر فقط
+        group["total_actual_ctc"] = group["total_actual_ctc"] + row.total
+
+    for row in raw_data_2:
         key = (row.project, row.employee, row.level, row.ctc)
         group = grouped[key]
 
