@@ -98,7 +98,7 @@ def execute(filters=None):
         group["total_actual_ctc"] = group["total_actual_ctc"] + row.total
 
     for row in raw_data_2:
-        key = (row.project, row.employee, row.level, row.ctc)
+        key = (row.project, row.employee, row.ctc)
         group = grouped[key]
 
         group["project"] = row.project
