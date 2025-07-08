@@ -147,6 +147,8 @@ def get_project_data(filters):
     
     final_data = []
 
+    t_debit = t_credit = 0.0
+    
     if group_filter == 1:
         grouped_data = {}
         other_data = []
@@ -167,7 +169,10 @@ def get_project_data(filters):
     
             debit = entry.get("debit", 0) * percentage
             credit = entry.get("credit", 0) * percentage
-    
+
+            t_debit += debit
+            t_credit += credit
+            
             if party and entry.get("party_type") == "Employee":
                 key = (project_id, party)
                 if key not in grouped_data:
@@ -249,6 +254,9 @@ def get_project_data(filters):
             debit = entry.get("debit", 0) * percentage
             credit = entry.get("credit", 0) * percentage
             aggregated_balance += credit - debit
+
+            t_debit += debit
+            t_credit += credit
     
             final_data.append({
                 "project_id": project_info.get("project_id"),
@@ -273,6 +281,14 @@ def get_project_data(filters):
                 "credit": credit,
                 "balance": aggregated_balance
             })
+            
+    total = {
+        "description": "Total",
+        "debit": t_total_ctc,
+        "credit": t_total_revenue,
+        "balance": t_total_revenue - t_total_ctc
+    }
+    final_data.append(total)
     
     return final_data
 
