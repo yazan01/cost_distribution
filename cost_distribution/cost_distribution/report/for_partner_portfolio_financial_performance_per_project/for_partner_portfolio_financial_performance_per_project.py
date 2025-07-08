@@ -207,7 +207,7 @@ def get_project_data(filters):
         final_data.append(row)
 
     total = {
-        "sales_order_amount": "Total",
+        "client": "Total",
         "total_ctc": t_total_ctc,
         "total_revenue": t_total_revenue,
         "profit_loss_ctc": t_total_revenue - t_total_ctc
