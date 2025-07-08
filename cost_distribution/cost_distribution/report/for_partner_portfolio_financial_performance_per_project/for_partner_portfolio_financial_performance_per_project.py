@@ -73,7 +73,7 @@ def get_project_data(filters):
             so.total AS sales_order_amount
         FROM `tabPartners Percentage` pp
         JOIN `tabProject` pro ON pro.name = pp.parent
-        JOIN `tabSales Order` so ON so.project = pro.name
+        LEFT JOIN `tabSales Order` so ON so.project = pro.name
         WHERE {where_sql}
     """, params, as_dict=True)
 
