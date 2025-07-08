@@ -193,7 +193,7 @@ def get_project_data(filters):
             "project_type": project.project_type,
             "project_status": project.project_status,
             "client": project.client,
-            "sales_order_amount": round((project.sales_order_amount * percentage), 2),
+            "sales_order_amount": round(((project.sales_order_amount or 0.0) * percentage), 2),
             "total_ctc": round(total_ctc, 2),
             "total_actual": round(actual, 2),
             "total_revenue": round(revenue, 2),
