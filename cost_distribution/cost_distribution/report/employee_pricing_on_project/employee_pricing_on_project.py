@@ -48,7 +48,7 @@ def execute(filters=None):
                 {conditions}
         """, as_dict=True)
 
-         raw_data_2 = frappe.db.sql(f"""
+        raw_data_2 = frappe.db.sql(f"""
             SELECT  
                 cd.posting_date,
                 e.employee,
