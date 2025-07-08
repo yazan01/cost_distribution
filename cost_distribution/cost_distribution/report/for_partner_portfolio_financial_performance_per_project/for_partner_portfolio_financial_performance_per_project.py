@@ -157,7 +157,7 @@ def get_project_data(filters):
     final_data = []
 
     cumulative_ctc = cumulative_actual = cumulative_revenue = cumulative_pl_ctc = cumulative_pl_actual = 0
-
+    t_total_ctc = t_total_revenue = 0.0
     for project in all_projects:
         pid = project.project_id
         percentage = project_percentages.get(pid, 0)
@@ -171,7 +171,10 @@ def get_project_data(filters):
 
         profit_loss_ctc = revenue - total_ctc
         profit_loss_actual = revenue - actual
-
+        #//////
+        t_total_ctc += total_ctc
+        t_total_revenue += revenue
+        
         if aggregated_filter:
             cumulative_ctc += total_ctc
             cumulative_actual += actual
@@ -203,6 +206,14 @@ def get_project_data(filters):
 
         final_data.append(row)
 
+    total = {
+        "sales_order_amount": "Total",
+        "total_ctc": t_total_ctc,
+        "total_revenue": t_total_revenue,
+        "profit_loss_ctc": t_total_revenue - t_total_ctc
+    }
+    final_data.append(total)
+    
     return final_data
 
 
