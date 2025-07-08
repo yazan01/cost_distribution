@@ -284,9 +284,9 @@ def get_project_data(filters):
             
     total = {
         "description": "Total",
-        "debit": t_total_ctc,
-        "credit": t_total_revenue,
-        "balance": t_total_revenue - t_total_ctc
+        "debit":  t_debit,
+        "credit": t_credit,
+        "balance": t_credit -  t_debit
     }
     final_data.append(total)
     
