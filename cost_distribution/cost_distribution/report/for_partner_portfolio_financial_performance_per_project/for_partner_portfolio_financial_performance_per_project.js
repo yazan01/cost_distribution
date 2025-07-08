@@ -37,7 +37,7 @@ frappe.query_reports["For Partner Portfolio Financial Performance Per Project"] 
                 }
         
                 return frappe.call({
-                    method: "cost_distribution.cost_distribution.report.for_partner_portfolio_financial_performance.for_partner_portfolio_financial_performance.get_projects_by_partner",
+                    method: "cost_distribution.cost_distribution.report.partner_portfolio_financial_performance.partner_portfolio_financial_performance.get_projects_by_partner",
                     args: {
                         partner: partner,
                         txt: txt || "",
