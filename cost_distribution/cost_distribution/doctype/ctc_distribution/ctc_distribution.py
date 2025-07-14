@@ -259,6 +259,12 @@ class CTCDistribution(Document):
                         matched_ctc = rate_row.ctc
                         break
 
+                if matched_ctc is None:
+                    for rate_row in level_doc.rate:
+                        if rate_row.year == fiscal_year and rate_row.project == "":
+                            matched_ctc = rate_row.ctc
+                            break
+
                 if matched_ctc is not None:
                     new_cost = (matched_ctc * cost_row.perc_distribution) / 100
                     cost_row.total_cost_of_project = new_cost
