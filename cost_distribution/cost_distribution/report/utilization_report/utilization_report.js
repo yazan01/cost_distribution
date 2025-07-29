@@ -42,10 +42,16 @@ frappe.query_reports["Utilization Report"] = {
       options: "Levels"
     },
     {
-      fieldname: "employee",
-      label: "Employee",
+      fieldname: "level",
+      label: "Level",
       fieldtype: "Link",
-      options: "Employee"
+      options: "Levels"
+    },
+    {
+      fieldname: "employment_type",
+      label: "Employment Type",
+      fieldtype: "Link",
+      options: "Employment Type"
     },
     {
       fieldname: "employee_name",
