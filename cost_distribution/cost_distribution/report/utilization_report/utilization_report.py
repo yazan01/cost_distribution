@@ -8,6 +8,7 @@ def execute(filters=None):
     employee_status = filters.get("employee_status")
     portfolio_type = filters.get("portfolio_type")
     level = filters.get("level")
+    employment_type = filters.get("employment_type")
 
     conditions = "1=1"
     if from_date and to_date:
@@ -22,6 +23,8 @@ def execute(filters=None):
         conditions += f" AND p.custom_portfolio_category = '{portfolio_type}'"
     if level:
         conditions += f" AND d.custom_level = '{level}'"
+    if employment_type:
+        conditions += f" AND d.employment_type = '{employment_type}'"
 
     # Exclude rows with NULL allocation type
     conditions += " AND p.custom_allocation_type IS NOT NULL"
@@ -30,6 +33,7 @@ def execute(filters=None):
         SELECT 
             ts.employee,
             e.employee_name,
+            e.employment_type,
             SUM(CASE WHEN p.custom_allocation_type != 'NA' THEN t.hours ELSE 0 END) AS total_hours,
             SUM(CASE WHEN p.custom_allocation_type = 'Billable' THEN t.hours ELSE 0 END) AS billable_hours,
             SUM(CASE WHEN p.custom_allocation_type = 'Partially Billable' 
@@ -56,6 +60,7 @@ def execute(filters=None):
     columns = [
         {"label": "Employee", "fieldname": "employee", "fieldtype": "Link", "options": "Employee", "width": 180},
         {"label": "Employee Name", "fieldname": "employee_name", "fieldtype": "Data", "width": 180},
+        {"label": "Employment Type", "fieldname": "employment_type", "fieldtype": "Data", "width": 180},
         {"label": "Billable Hours %", "fieldname": "profitable_ratio", "fieldtype": "Percent", "width": 180},
         {"label": "Total Hours", "fieldname": "total_hours", "fieldtype": "Float", "width": 150},
         {"label": "Non-Billable Hours", "fieldname": "non_billable_hours", "fieldtype": "Float", "width": 180},
