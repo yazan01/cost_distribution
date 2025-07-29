@@ -24,7 +24,7 @@ def execute(filters=None):
     if level:
         conditions += f" AND d.custom_level = '{level}'"
     if employment_type:
-        conditions += f" AND d.employment_type = '{employment_type}'"
+        conditions += f" AND e.employment_type = '{employment_type}'"
 
     # Exclude rows with NULL allocation type
     conditions += " AND p.custom_allocation_type IS NOT NULL"
