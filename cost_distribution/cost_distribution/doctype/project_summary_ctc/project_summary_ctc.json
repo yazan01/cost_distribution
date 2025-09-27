@@ -33,6 +33,13 @@
   },
   {
    "columns": 1,
+   "fieldname": "status",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Status"
+  },
+  {
+   "columns": 1,
    "fieldname": "total_cost_of_project",
    "fieldtype": "Float",
    "in_list_view": 1,
