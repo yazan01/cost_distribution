@@ -13,8 +13,7 @@ class CTCDistribution(Document):
         self.validate_fields()
         self.set_salary_slip_and_rate1()
         self.create_costing_summary()
-        # Apply project-specific CTC rates during validation
-        self.apply_project_specific_ctc_rates()
+        
 
     def on_submit(self):
         """Validate projects for employees with no timesheet"""
@@ -203,6 +202,7 @@ class CTCDistribution(Document):
                     )
             
             for row in result:
+                
                 self.append('employee_ctc_data', {
                     'employee': row.get('employee'),
                     'employee_name': row.get('employee_name'),
@@ -224,67 +224,6 @@ class CTCDistribution(Document):
                     'total_hours': row.get('total_hours'),
                 })
 
-    def apply_project_specific_ctc_rates(self):
-        """Apply project-specific CTC rates and update costs accordingly"""
-        if not self.posting_date:
-            return
-            
-        posting_date = frappe.utils.getdate(self.posting_date)
-        fiscal_year = str(posting_date.year)
-        
-        updated = False
-        results = []
-
-        for emp_row in self.employee_ctc_data:
-            if emp_row.employment_type != "Permanent":
-                continue
-
-            employee = emp_row.employee
-            level = emp_row.level
-
-            for cost_row in self.costing_summary:
-                if cost_row.employee != employee:
-                    continue
-
-                project = cost_row.project
-
-                try:
-                    level_doc = frappe.get_doc("Levels", level)
-                except:
-                    continue
-
-                matched_ctc = None
-                for rate_row in level_doc.rate:
-                    if rate_row.year == fiscal_year and rate_row.project == project:
-                        matched_ctc = rate_row.ctc
-                        break
-
-                if matched_ctc is None:
-                    for rate_row in level_doc.rate:
-                        if rate_row.year == fiscal_year and rate_row.project == "":
-                            matched_ctc = rate_row.ctc
-                            break
-
-                if matched_ctc is not None:
-                    new_cost = (matched_ctc * cost_row.perc_distribution) / 100
-                    cost_row.total_cost_of_project = new_cost
-                    results.append(
-                        f"Employee: {employee} | Project: {project} | Level: {level} | CTC: {matched_ctc} | New Cost: {new_cost}"
-                    )
-                    updated = True
-
-        if updated:
-            # Update Amount (sum of all total_cost_of_project)
-            self.amount = sum(row.total_cost_of_project for row in self.costing_summary if row.total_cost_of_project)
-
-            # Update employee_ctc_data.ctc per employee
-            for emp_row in self.employee_ctc_data:
-                emp = emp_row.employee
-                total = sum(row.total_cost_of_project for row in self.costing_summary if row.employee == emp)
-                emp_row.ctc = total
-            
-            if results and frappe.flags.in_request:
-                frappe.msgprint(f"Applied project-specific CTC rates for {len(results)} entries")
 
     @frappe.whitelist()
     def create_costing_summary(self):
@@ -314,6 +253,7 @@ class CTCDistribution(Document):
                             'total_cost_of_project': project.total_cost_of_project,
                             'perc_distribution': project.perc_distribution,
                             'timesheets_data': project.timesheets_data,
+                            'status': project.custom_status
                         })
                         total_cost_of_project += project.total_cost_of_project
         
@@ -322,9 +262,30 @@ class CTCDistribution(Document):
 @frappe.whitelist()
 def get_time_sheet_summary(salary_data, cost_dist_doc):
     employee = salary_data.employee
+
+    employment_type_1 = salary_data.employment_type
+    employee_level = salary_data.level
+
     total = salary_data.ctc
     from_date = cost_dist_doc.from_date
     to_date = cost_dist_doc.to_date
+
+
+
+    from_date_obj = datetime.strptime(from_date, '%Y-%m-%d')
+    year = from_date_obj.year
+
+
+    start_date = datetime.strptime(from_date, '%Y-%m-%d')
+    end_date = datetime.strptime(to_date, '%Y-%m-%d')
+    current_date = start_date
+    number_of_days = 0
+    while current_date <= end_date:
+        if current_date.weekday() not in (4, 5):
+            number_of_days += 1
+        current_date += timedelta(days=1)
+
+
 
     from_date_1 = str(from_date) + " 00:00:01.000"
     to_date_1 = str(to_date) + " 23:59:59.995"
@@ -334,7 +295,7 @@ def get_time_sheet_summary(salary_data, cost_dist_doc):
     # Fetch timesheet data
     data = frappe.db.sql(
         """
-        SELECT ts.name as timesheet, tsd.project, tsd.from_time, tsd.to_time, tsd.hours, tsd.name as timesheet_child
+        SELECT ts.name as timesheet, tsd.project, tsd.from_time, tsd.to_time, tsd.hours, tsd.name as timesheet_child, tsd.custom_status 
         FROM `tabTimesheet` ts, `tabTimesheet Detail` tsd 
         WHERE ts.docstatus=1 AND ts.name = tsd.parent AND ts.employee=%s 
         AND tsd.from_time >= %s AND tsd.to_time <= %s
@@ -353,43 +314,123 @@ def get_time_sheet_summary(salary_data, cost_dist_doc):
         hours = 1
         net_rate_per_hour = total / hours
 
-        data_dict.setdefault(project, {
+        
+        project_key = f"{project}_Remotely"  # أو يمكن استخدام حالة افتراضية
+        data_dict.setdefault(project_key, {
+            'project': project,
+            'custom_status': 'Remotely',
             'total_hours': 1,
             'total_cost_of_project': total,
             'cost_per_hour': net_rate_per_hour,
             'timesheets_data': []
         })
+
     else:
-        hours = sum([d.hours for d in data])
-        net_rate_per_hour = total / hours
+        if employment_type_1 == "Permanent":
 
-        for d in data:
-            data_dict.setdefault(d.project, {
-                'total_hours': 0,
-                'total_cost_of_project': 0,
-                'cost_per_hour': net_rate_per_hour,
-                'timesheets_data': []
-            })
+            for d in data:   
+                      
+                level_proj_ctc = 0
 
-            data_dict[d.project]['total_hours'] += d.hours
-            data_dict[d.project]['timesheets_data'].append({
-                'timesheet': d.timesheet,
-                'timesheet_child': d.timesheet_child,
-                'hours': d.hours
-            })
+                if d.custom_status == 'Remotely':
+                    level = f"{employee_level}-R"
+                else:
+                    level = f"{employee_level}"
+                
+                ctc_proj = frappe.db.sql(
+                    """
+                    SELECT ctc FROM `tabLevel Rate` WHERE parent = %s AND project = %s AND year = %s
+                    """,
+                    (level, d.project, year),
+                    as_dict=True,
+                )
+                if not ctc_proj:
+                    ctc_proj_1 = frappe.db.sql(
+                        """
+                        SELECT ctc FROM `tabLevel Rate` WHERE parent = %s AND project = %s AND year = %s
+                        """,
+                        (employee_level, d.project, year),
+                        as_dict=True,
+                    )
+                    if not ctc_proj_1:
+                        ctc_proj_2 = frappe.db.sql(
+                            """
+                            SELECT ctc FROM `tabLevel Rate` WHERE parent = %s AND project IS NULL AND year = %s
+                            """,
+                            (employee_level, year),
+                            as_dict=True,
+                        )
+                        level_proj_ctc = ctc_proj_2[0].ctc
+                    else:
+                        level_proj_ctc = ctc_proj_1[0].ctc
+                else:
+                    level_proj_ctc = ctc_proj[0].ctc
+
+                net_rate_per_hour = level_proj_ctc / (number_of_days * 9)
+
+                project_status_key = f"{d.project}_{d.custom_status}"
+                            
+                data_dict.setdefault(project_status_key, {
+                    'project': d.project,
+                    'custom_status': d.custom_status,
+                    'total_hours': 0,
+                    'total_cost_of_project': 0,
+                    'cost_per_hour': net_rate_per_hour,
+                    'timesheets_data': []
+                })
+                
+                data_dict[project_status_key]['total_hours'] += d.hours
+                data_dict[project_status_key]['timesheets_data'].append({
+                    'timesheet': d.timesheet,
+                    'timesheet_child': d.timesheet_child,
+                    'hours': d.hours,
+                    'custom_status': d.custom_status
+                })            
+        else:
+            hours = sum([d.hours for d in data])
+            net_rate_per_hour = total / hours
+
+            for d in data:                
+                project_status_key = f"{d.project}_{d.custom_status}"
+
+                data_dict.setdefault(project_status_key, {
+                    'project': d.project,
+                    'custom_status': d.custom_status,
+                    'total_hours': 0,
+                    'total_cost_of_project': 0,
+                    'cost_per_hour': net_rate_per_hour,
+                    'timesheets_data': []
+                })
+                
+                data_dict[project_status_key]['total_hours'] += d.hours
+                data_dict[project_status_key]['timesheets_data'].append({
+                    'timesheet': d.timesheet,
+                    'timesheet_child': d.timesheet_child,
+                    'hours': d.hours,
+                    'custom_status': d.custom_status
+                })
 
     # Calculate total cost of all projects
     total_cost_of_all_projects = 0
     for d in data_dict:
-        data_dict[d]['total_cost_of_project'] = data_dict[d]['total_hours'] * net_rate_per_hour
+        data_dict[d]['total_cost_of_project'] = data_dict[d]['total_hours'] * data_dict[d]['cost_per_hour']
         total_cost_of_all_projects += data_dict[d]['total_cost_of_project']
+
+    if employment_type_1 == "Permanent":
+        # Update CTC in employee_ctc_data for this employee
+        for emp_data in cost_dist_doc.employee_ctc_data:
+            if emp_data.employee == employee:
+                emp_data.ctc = total_cost_of_all_projects
+                break
 
     # Prepare project list
     project_list = []
     for k, v in data_dict.items():
         project_list.append(frappe._dict({
-            'project': k,
-            'cost_per_hour': net_rate_per_hour,
+            'project': data_dict[k]['project'],
+            'custom_status': data_dict[k]['custom_status'],
+            'project_status_key': k,
+            'cost_per_hour': data_dict[k]['cost_per_hour'],
             'total_hours': data_dict[k]['total_hours'],
             'timesheets_data': cstr(data_dict[k]['timesheets_data']),
             'total_cost_of_project': data_dict[k]['total_cost_of_project'],
