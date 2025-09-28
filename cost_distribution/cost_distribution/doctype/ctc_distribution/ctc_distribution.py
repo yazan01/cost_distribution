@@ -224,6 +224,21 @@ class CTCDistribution(Document):
                     'total_hours': row.get('total_hours'),
                 })
 
+            # Handle level exceptions for employees
+            if self.get('add_level_for_employee_exception'):
+                for exception_row in self.get('add_level_for_employee_exception'):
+                    exception_employee = exception_row.get('employee')
+                    new_level = exception_row.get('new_level')
+                    
+                    if exception_employee and new_level:
+                        # Find and update the employee level in employee_ctc_data
+                        for ctc_row in self.employee_ctc_data:
+                            if ctc_row.employee == exception_employee:
+                                # Update only the level, keep existing CTC
+                                ctc_row.level = new_level
+                                break
+
+
 
     @frappe.whitelist()
     def create_costing_summary(self):
