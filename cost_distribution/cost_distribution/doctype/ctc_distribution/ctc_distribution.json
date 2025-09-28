@@ -19,6 +19,7 @@
      "section_break_bchsc",
      "employee_ctc_data",
      "add_project_for_employee_no_timesheet",
+     "add_level_for_employee_exception",
      "costing_summary",  
      "employee_with_no_timesheet",    
      "section_break_orgdc",
@@ -98,6 +99,12 @@
       "label": "Add Project For Employee No Timesheet",
       "options": "CTC Employee Timesheet"
      },
+     {
+      "fieldname": "add_level_for_employee_exception",
+      "fieldtype": "Table",
+      "label": "Add Level For Employee Exception",
+      "options": "CTC Employee Exception"
+     }, 
      {
       "fieldname": "costing_summary",
       "fieldtype": "Table",
