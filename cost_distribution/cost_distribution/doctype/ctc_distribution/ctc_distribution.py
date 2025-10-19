@@ -1,4 +1,4 @@
-# Copyright (c) 2024, Furqan Asghar and contributors
+# Copyright (c) 2024, Yazan Hamdan and contributors
 # For license information, please see license.txt
 
 from frappe.model.document import Document
@@ -11,7 +11,7 @@ class CTCDistribution(Document):
     def validate(self):
         """Validates and processes salary slips and costing summary."""
         self.validate_fields()
-        self.set_salary_slip_and_rate1()
+        #self.set_salary_slip_and_rate1()
         self.create_costing_summary()
         
 
@@ -246,10 +246,31 @@ class CTCDistribution(Document):
         if self.distribution_type not in ['Employee', 'CTC Distribution']:
             return
 
-        self.costing_summary = []
-        total_cost_of_project = 0
+        #self.costing_summary = []
+        #total_cost_of_project = 0
+
+        # Get list of permanent employees update
+        permanent_employees = [
+            salary_data.employee 
+            for salary_data in self.employee_ctc_data 
+            if salary_data.employment_type == "Permanent"
+        ]
+        
+        # Remove only permanent employee entries from costing summaryupdate update
+        self.costing_summary = [
+            entry for entry in self.costing_summary 
+            if entry.employee not in permanent_employees
+        ]
+        # update
+        total_cost_of_project = sum([entry.total_cost_of_project for entry in self.costing_summary])
+    
 
         for salary_data in self.employee_ctc_data:
+
+            # Skip if not permanent employee update
+            if salary_data.employment_type != "Permanent":
+                continue
+        
             time_sheet_summary = get_time_sheet_summary(salary_data, self)
             if time_sheet_summary:
                 if "employee_with_no_timesheet" in time_sheet_summary:
