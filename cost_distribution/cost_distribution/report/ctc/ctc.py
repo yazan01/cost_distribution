@@ -2,6 +2,7 @@ from collections import OrderedDict
 import frappe
 from frappe import _, _dict
 from frappe.utils import cstr, getdate
+from datetime import datetime, timedelta
 
 from erpnext import get_company_currency, get_default_company
 from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import (
@@ -65,10 +66,8 @@ def execute(filters=None):
 	    cost.employment_type AS 'Employee Type',
 	    cost.designation AS 'Designation',
 	    cost.level AS 'Level',
-	    CASE 
-	        WHEN cost.employment_type = 'Permanent' THEN COALESCE(lr_specific.ctc, lr_fallback.ctc)
-	        ELSE cost.ctc
-	    END AS 'Level CTC',
+        psc.status AS 'Status',
+	    cost.ctc AS 'Level CTC',
 	    CASE 
 	        WHEN cost.total_hours = 0 THEN 1
 	        ELSE CASE
@@ -97,18 +96,6 @@ def execute(filters=None):
 	    `tabProject` AS pro
 	ON
 	    psc.project = pro.name
-	LEFT JOIN
-	    `tabLevel Rate` AS lr_specific
-	ON
-	    cost.level = lr_specific.parent 
-	    AND YEAR(ctc.posting_date) = lr_specific.year
-	    AND psc.project = lr_specific.project
-	LEFT JOIN
-	    `tabLevel Rate` AS lr_fallback
-	ON
-	    cost.level = lr_fallback.parent
-	    AND YEAR(ctc.posting_date) = lr_fallback.year
-	    AND lr_fallback.project IS NULL
 	WHERE
 	    ctc.docstatus = 1
 	    AND ctc.posting_date BETWEEN %(from_date)s AND %(to_date)s
@@ -130,6 +117,7 @@ def execute(filters=None):
             NULL AS 'Employee Type',
             NULL AS 'Designation',
             NULL AS 'Level',
+            NULL AS 'Status',
             NULL AS 'Level CTC',
             NULL AS 'Total Hours',
             NULL AS 'Hours Rate',
@@ -167,6 +155,99 @@ def execute(filters=None):
 		"manager": select_partner,
 		"type": project_type_array
     }, as_dict=True)
+
+    ##########################################################################
+
+    for record in data_1:
+        if record.get('Employee Type') == 'Permanent':
+            employee_level = record['Level']
+            project = record['Project']
+            status = record['Status']
+
+            ctc = record['CTC']
+
+            ctc_d = frappe.db.sql("""
+                SELECT from_date, to_date FROM `tabCTC Distribution` 
+                WHERE name = %s
+            """, (ctc), as_dict=True)
+
+            if ctc_d:
+                from_date = ctc_d[0].from_date
+                to_date = ctc_d[0].to_date
+
+            start_date = datetime.strptime(from_date, '%Y-%m-%d')
+            end_date = datetime.strptime(to_date, '%Y-%m-%d')
+            current_date = start_date
+            number_of_days = 0
+            while current_date <= end_date:
+                if current_date.weekday() not in (4, 5):
+                    number_of_days += 1
+                current_date += timedelta(days=1)
+            
+            
+            # Determine the correct level based on status
+            if status == 'Remotely':
+                level_to_search = f"{employee_level}-R"
+            else:
+                level_to_search = employee_level
+            
+            # Get the correct CTC for this level and project
+            level_proj_ctc = None
+
+
+            
+            # project level with -R if remotely
+            if status == 'Remotely':
+                ctc_result = frappe.db.sql("""
+                    SELECT ctc, parent FROM `tabLevel Rate` 
+                    WHERE parent = %s AND project = %s AND year = %s
+                """, (level_to_search, project, year), as_dict=True)
+                
+                if ctc_result:
+                    level_proj_ctc = ctc_result[0].ctc
+                    calculate_level = ctc_result[0].parent
+            
+            # project level without -R
+            if not level_proj_ctc:
+                ctc_result = frappe.db.sql("""
+                    SELECT ctc, parent FROM `tabLevel Rate` 
+                    WHERE parent = %s AND project = %s AND year = %s
+                """, (employee_level, project, year), as_dict=True)
+                
+                if ctc_result:
+                    level_proj_ctc = ctc_result[0].ctc
+                    calculate_level = ctc_result[0].parent
+            
+            # level CTC
+            if not level_proj_ctc:
+                ctc_result = frappe.db.sql("""
+                    SELECT ctc, parent FROM `tabLevel Rate` 
+                    WHERE parent = %s AND project IS NULL AND year = %s
+                """, (employee_level, year), as_dict=True)
+                
+                if ctc_result:
+                    level_proj_ctc = ctc_result[0].ctc
+                    calculate_level = ctc_result[0].parent
+
+
+            
+            # Update record with correct values
+            if level_proj_ctc:
+                # 1. Update Level to show -R if remotely
+                record['Level'] = calculate_level
+                
+                # 2. Update Level CTC with the correct value
+                record['Level CTC'] = level_proj_ctc
+                
+                # 3. Update Total Hours to full working hours in the period
+                record['Total Hours'] = (number_of_days*9)
+                
+                
+
+
+
+
+    ##########################################################################
 
     assign = filters.get("Assign_to")
 
@@ -248,6 +329,7 @@ def execute(filters=None):
         {"label": "Employee Type", "fieldname": "Employee Type", "fieldtype": "Data", "width": 150},
         {"label": "Designation", "fieldname": "Designation", "fieldtype": "Data", "width": 150},
         {"label": "Level", "fieldname": "Level", "fieldtype": "Data", "width": 150},
+        {"label": "Status", "fieldname": "Status", "fieldtype": "Data", "width": 150},
         {"label": "Level CTC", "fieldname": "Level CTC", "fieldtype": "Data", "width": 150},
         {"label": "Total Hours", "fieldname": "Total Hours", "fieldtype": "Float", "width": 100},
         {"label": "Hours Rate", "fieldname": "Hours Rate", "fieldtype": "Data", "width": 150},
