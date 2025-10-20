@@ -179,7 +179,8 @@ def execute(filters=None):
             #end_date = datetime.strptime(to_date, '%Y-%m-%d')
             start_date = from_date
             end_date = to_date
-			
+            year = end_date.year
+
             current_date = start_date
             number_of_days = 0
             while current_date <= end_date:
