@@ -177,8 +177,7 @@ def execute(filters=None):
 
             #start_date = datetime.strptime(from_date, '%Y-%m-%d')
             #end_date = datetime.strptime(to_date, '%Y-%m-%d')
-
-			start_date = from_date
+            start_date = from_date
             end_date = to_date
 			
             current_date = start_date
