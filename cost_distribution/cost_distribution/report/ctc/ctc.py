@@ -160,11 +160,20 @@ def execute(filters=None):
 
     for record in data_1:
         if record.get('Employee Type') == 'Permanent':
+            ctc = record['CTC']
+            emp = record['Employee']
+
+            exeption_level = frappe.db.sql("""
+                SELECT new_level FROM `tabCTC Employee Exception` 
+                WHERE parent = %s AND employee = %s
+            """, (ctc, emp), as_dict=True)
+
+            if exeption_level:
+                record['Level'] = exeption_level[0].new_level
+
             employee_level = record['Level']
             project = record['Project']
             status = record['Status']
-
-            ctc = record['CTC']
 
             ctc_d = frappe.db.sql("""
                 SELECT from_date, to_date FROM `tabCTC Distribution` 
