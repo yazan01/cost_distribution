@@ -11,7 +11,7 @@ class CTCDistribution(Document):
     def validate(self):
         """Validates and processes salary slips and costing summary."""
         self.validate_fields()
-        #self.set_salary_slip_and_rate1()
+        self.set_salary_slip_and_rate1()
         self.create_costing_summary()
         
 
@@ -246,30 +246,30 @@ class CTCDistribution(Document):
         if self.distribution_type not in ['Employee', 'CTC Distribution']:
             return
 
-        #self.costing_summary = []
-        #total_cost_of_project = 0
+        self.costing_summary = []
+        total_cost_of_project = 0
 
         # Get list of permanent employees update
-        permanent_employees = [
-            salary_data.employee 
-            for salary_data in self.employee_ctc_data 
-            if salary_data.employment_type == "Permanent"
-        ]
+        # permanent_employees = [
+        #     salary_data.employee 
+        #     for salary_data in self.employee_ctc_data 
+        #     if salary_data.employment_type == "Permanent"
+        # ]
         
         # Remove only permanent employee entries from costing summaryupdate update
-        self.costing_summary = [
-            entry for entry in self.costing_summary 
-            if entry.employee not in permanent_employees
-        ]
+        # self.costing_summary = [
+        #     entry for entry in self.costing_summary 
+        #     if entry.employee not in permanent_employees
+        # ]
         # update
-        total_cost_of_project = sum([entry.total_cost_of_project for entry in self.costing_summary])
+        # total_cost_of_project = sum([entry.total_cost_of_project for entry in self.costing_summary])
     
 
         for salary_data in self.employee_ctc_data:
 
             # Skip if not permanent employee update
-            if salary_data.employment_type != "Permanent":
-                continue
+            # if salary_data.employment_type != "Permanent":
+            #     continue
         
             time_sheet_summary = get_time_sheet_summary(salary_data, self)
             if time_sheet_summary:
@@ -288,8 +288,7 @@ class CTCDistribution(Document):
                             'total_hours': project.total_hours,
                             'total_cost_of_project': project.total_cost_of_project,
                             'perc_distribution': project.perc_distribution,
-                            'timesheets_data': project.timesheets_data,
-                            'status': project.custom_status
+                            'timesheets_data': project.timesheets_data
                         })
                         total_cost_of_project += project.total_cost_of_project
         
@@ -331,7 +330,7 @@ def get_time_sheet_summary(salary_data, cost_dist_doc):
     # Fetch timesheet data
     data = frappe.db.sql(
         """
-        SELECT ts.name as timesheet, tsd.project, tsd.from_time, tsd.to_time, tsd.hours, tsd.name as timesheet_child, tsd.custom_status 
+        SELECT ts.name as timesheet, tsd.project, tsd.from_time, tsd.to_time, tsd.hours, tsd.name as timesheet_child
         FROM `tabTimesheet` ts, `tabTimesheet Detail` tsd 
         WHERE ts.docstatus=1 AND ts.name = tsd.parent AND ts.employee=%s 
         AND tsd.from_time >= %s AND tsd.to_time <= %s
@@ -351,10 +350,9 @@ def get_time_sheet_summary(salary_data, cost_dist_doc):
         net_rate_per_hour = total / hours
 
         
-        project_key = f"{project}_Remotely"  # أو يمكن استخدام حالة افتراضية
+        project_key = f"{project}"  # أو يمكن استخدام حالة افتراضية
         data_dict.setdefault(project_key, {
             'project': project,
-            'custom_status': 'Remotely',
             'total_hours': 1,
             'total_cost_of_project': total,
             'cost_per_hour': net_rate_per_hour,
@@ -368,7 +366,7 @@ def get_time_sheet_summary(salary_data, cost_dist_doc):
                       
                 level_proj_ctc = 0
 
-                if d.custom_status == 'Remotely':
+                if cost_dist_doc.company != 'iValue KSA':
                     level = f"{employee_level}-R"
                 else:
                     level = f"{employee_level}"
@@ -404,11 +402,10 @@ def get_time_sheet_summary(salary_data, cost_dist_doc):
 
                 net_rate_per_hour = level_proj_ctc / (number_of_days * 9)
 
-                project_status_key = f"{d.project}_{d.custom_status}"
+                project_status_key = f"{d.project}"
                             
                 data_dict.setdefault(project_status_key, {
                     'project': d.project,
-                    'custom_status': d.custom_status,
                     'total_hours': 0,
                     'total_cost_of_project': 0,
                     'cost_per_hour': net_rate_per_hour,
@@ -419,19 +416,17 @@ def get_time_sheet_summary(salary_data, cost_dist_doc):
                 data_dict[project_status_key]['timesheets_data'].append({
                     'timesheet': d.timesheet,
                     'timesheet_child': d.timesheet_child,
-                    'hours': d.hours,
-                    'custom_status': d.custom_status
+                    'hours': d.hours
                 })            
         else:
             hours = sum([d.hours for d in data])
             net_rate_per_hour = total / hours
 
             for d in data:                
-                project_status_key = f"{d.project}_{d.custom_status}"
+                project_status_key = f"{d.project}"
 
                 data_dict.setdefault(project_status_key, {
                     'project': d.project,
-                    'custom_status': d.custom_status,
                     'total_hours': 0,
                     'total_cost_of_project': 0,
                     'cost_per_hour': net_rate_per_hour,
@@ -442,8 +437,7 @@ def get_time_sheet_summary(salary_data, cost_dist_doc):
                 data_dict[project_status_key]['timesheets_data'].append({
                     'timesheet': d.timesheet,
                     'timesheet_child': d.timesheet_child,
-                    'hours': d.hours,
-                    'custom_status': d.custom_status
+                    'hours': d.hours
                 })
 
     # Calculate total cost of all projects
@@ -464,7 +458,6 @@ def get_time_sheet_summary(salary_data, cost_dist_doc):
     for k, v in data_dict.items():
         project_list.append(frappe._dict({
             'project': data_dict[k]['project'],
-            'custom_status': data_dict[k]['custom_status'],
             'project_status_key': k,
             'cost_per_hour': data_dict[k]['cost_per_hour'],
             'total_hours': data_dict[k]['total_hours'],
