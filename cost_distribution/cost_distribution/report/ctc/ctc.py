@@ -176,13 +176,14 @@ def execute(filters=None):
             status = record['Status']
 
             ctc_d = frappe.db.sql("""
-                SELECT from_date, to_date FROM `tabCTC Distribution` 
+                SELECT from_date, to_date, company FROM `tabCTC Distribution` 
                 WHERE name = %s
             """, (ctc), as_dict=True)
 
             if ctc_d:
                 from_date = ctc_d[0].from_date
                 to_date = ctc_d[0].to_date
+                ctc_company = ctc_d[0].company
 
             #start_date = datetime.strptime(from_date, '%Y-%m-%d')
             #end_date = datetime.strptime(to_date, '%Y-%m-%d')
@@ -199,7 +200,7 @@ def execute(filters=None):
             
             
             # Determine the correct level based on status
-            if status == 'Remotely':
+            if ctc_company != "iValue KSA":
                 level_to_search = f"{employee_level}-R"
             else:
                 level_to_search = employee_level
@@ -210,7 +211,7 @@ def execute(filters=None):
 
             
             # project level with -R if remotely
-            if status == 'Remotely':
+            if ctc_company != "iValue KSA":
                 ctc_result = frappe.db.sql("""
                     SELECT ctc, parent FROM `tabLevel Rate` 
                     WHERE parent = %s AND project = %s AND year = %s
@@ -342,7 +343,6 @@ def execute(filters=None):
         {"label": "Employee Type", "fieldname": "Employee Type", "fieldtype": "Data", "width": 150},
         {"label": "Designation", "fieldname": "Designation", "fieldtype": "Data", "width": 150},
         {"label": "Level", "fieldname": "Level", "fieldtype": "Data", "width": 150},
-        {"label": "Status", "fieldname": "Status", "fieldtype": "Data", "width": 150},
         {"label": "Level CTC", "fieldname": "Level CTC", "fieldtype": "Data", "width": 150},
         {"label": "Total Hours", "fieldname": "Total Hours", "fieldtype": "Float", "width": 100},
         {"label": "Hours Rate", "fieldname": "Hours Rate", "fieldtype": "Data", "width": 150},
