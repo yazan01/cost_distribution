@@ -304,6 +304,7 @@ def get_time_sheet_summary(salary_data, cost_dist_doc):
     total = salary_data.ctc
     from_date = cost_dist_doc.from_date
     to_date = cost_dist_doc.to_date
+    ctc_company = cost_dist_doc.company
 
 
 
@@ -366,7 +367,7 @@ def get_time_sheet_summary(salary_data, cost_dist_doc):
                       
                 level_proj_ctc = 0
 
-                if cost_dist_doc.company != 'iValue KSA':
+                if ctc_company != "iValue KSA":
                     level = f"{employee_level}-R"
                 else:
                     level = f"{employee_level}"
