@@ -184,7 +184,7 @@ def get_employee_family_count(employee):
         FROM 
             `tabEmployee Family`
         WHERE 
-            parent = %s
+            parent = %s AND parentfield = 'family'
     """, (employee), as_dict=1)
 
     for member in family_members:
