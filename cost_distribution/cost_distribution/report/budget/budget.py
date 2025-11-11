@@ -172,7 +172,7 @@ def get_employee_budget_data(emp, filters):
     return row
 
 
-def get_employee_family_details(employee):
+def get_employee_family_count(employee):
 
     family_count = 1
 
