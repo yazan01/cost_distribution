@@ -216,8 +216,8 @@ def get_employee_monthly_medical(employee):
             `tabGL Entry`
         WHERE 
             docstatus = 1
-            AND account LIKE '%5229 - Medical and Insurance%'
-            AND remarks LIKE '%Cost Distribution Account%'
+            AND account LIKE '%%5229 - Medical and Insurance%%'
+            AND remarks LIKE '%%Cost Distribution Account%%'
             AND posting_date BETWEEN '2025-08-01' AND '2025-08-31'
             AND party_type = 'Employee' 
             AND party = %s
