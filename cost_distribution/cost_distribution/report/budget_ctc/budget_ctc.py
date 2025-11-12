@@ -106,7 +106,7 @@ def get_employee_budget_data(emp, filters):
             'level': emp.custom_level,
             'company': emp.company,
             'custom_supporting_services__consultant': emp.unit,
-            'projects': f"{allocation['project_name']} ({allocation['allocation_percentage']}%)",
+            'projects': f"{allocation['project']} {allocation['project_name']} ({allocation['allocation_percentage']}%)",
             'jan': allocation.get('jan', 0),
             'feb': allocation.get('feb', 0),
             'mar': allocation.get('mar', 0),
