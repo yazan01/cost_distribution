@@ -162,7 +162,7 @@ def get_employee_alocations(employee, company, employee_level):
             employee, 
             employee_name, 
             allocation_percentage,
-            from_date,
+            start_date,
             end_date
         FROM 
             `tabProject Assignment`
@@ -172,7 +172,7 @@ def get_employee_alocations(employee, company, employee_level):
             AND end_date >= '2026-01-01'
             AND employee = %s
         ORDER BY
-            project, from_date
+            project, start_date
     """, (employee), as_dict=1)
 
     project_rows = []
@@ -223,7 +223,7 @@ def get_employee_alocations(employee, company, employee_level):
         monthly_costs = calculate_monthly_costs(
             level_proj_ctc, 
             d.allocation_percentage,
-            getdate(d.get('from_date')) if d.get('from_date') else date(2026, 1, 1),
+            getdate(d.get('start_date')) if d.get('start_date') else date(2026, 1, 1),
             getdate(d.end_date)
         )
         
@@ -337,7 +337,7 @@ def get_bench_periods(employee, company, employee_level, unit):
     # الحصول على جميع فترات التخصيص
     allocations = frappe.db.sql("""
         SELECT 
-            from_date,
+            start_date,
             end_date
         FROM 
             `tabProject Assignment`
@@ -347,7 +347,7 @@ def get_bench_periods(employee, company, employee_level, unit):
             AND end_date >= '2026-01-01'
             AND employee = %s
         ORDER BY
-            from_date
+            start_date
     """, (employee), as_dict=1)
     
     # الحصول على CTC الافتراضي
@@ -388,7 +388,7 @@ def get_bench_periods(employee, company, employee_level, unit):
         return bench_rows
     
     # فحص الفترة من بداية السنة إلى أول تخصيص
-    first_allocation_start = getdate(allocations[0].get('from_date')) if allocations[0].get('from_date') else year_start
+    first_allocation_start = getdate(allocations[0].get('start_date')) if allocations[0].get('start_date') else year_start
     
     if year_start < first_allocation_start:
         monthly_costs = calculate_monthly_costs(
@@ -409,7 +409,7 @@ def get_bench_periods(employee, company, employee_level, unit):
     # فحص الفجوات بين التخصيصات
     for i in range(len(allocations) - 1):
         current_end = getdate(allocations[i].end_date)
-        next_start = getdate(allocations[i + 1].get('from_date')) if allocations[i + 1].get('from_date') else year_start
+        next_start = getdate(allocations[i + 1].get('start_date')) if allocations[i + 1].get('start_date') else year_start
         
         gap_start = current_end + timedelta(days=1)
         gap_end = next_start - timedelta(days=1)
