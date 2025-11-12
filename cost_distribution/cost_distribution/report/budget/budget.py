@@ -21,6 +21,7 @@ def get_columns(filters):
         columns = [
             {"label": _("Employee"), "fieldname": "employee", "fieldtype": "Link", "options": "Employee", "width": 120},
             {"label": _("Employee Name"), "fieldname": "employee_name", "fieldtype": "Data", "width": 150},
+            {"label": _("Department"), "fieldname": "department", "fieldtype": "Data", "width": 150},
             {"label": _("Designation"), "fieldname": "designation", "fieldtype": "Link", "options": "Designation", "width": 150},
             {"label": _("Level"), "fieldname": "level", "fieldtype": "Data", "width": 100},
             {"label": _("Company"), "fieldname": "company", "fieldtype": "Link", "options": "Company", "width": 150},
@@ -47,10 +48,12 @@ def get_columns(filters):
         columns = [
             {"label": _("Employee"), "fieldname": "employee", "fieldtype": "Link", "options": "Employee", "width": 120},
             {"label": _("Employee Name"), "fieldname": "employee_name", "fieldtype": "Data", "width": 150},
+            {"label": _("Department"), "fieldname": "department", "fieldtype": "Data", "width": 150},
             {"label": _("Designation"), "fieldname": "designation", "fieldtype": "Link", "options": "Designation", "width": 150},
             {"label": _("Level"), "fieldname": "level", "fieldtype": "Data", "width": 100},
             {"label": _("Company"), "fieldname": "company", "fieldtype": "Link", "options": "Company", "width": 150},
             {"label": _("Gross Pay"), "fieldname": "gross_pay", "fieldtype": "Float", "width": 120},
+            {"label": _("Nationality"), "fieldname": "nationality", "fieldtype": "Data", "width": 100},
             
             {"label": _("Social Security amount for the company"), "fieldname": "social_security", "fieldtype": "Float", "width": 150},
 
@@ -72,10 +75,12 @@ def get_columns(filters):
         columns = [
             {"label": _("Employee"), "fieldname": "employee", "fieldtype": "Link", "options": "Employee", "width": 120},
             {"label": _("Employee Name"), "fieldname": "employee_name", "fieldtype": "Data", "width": 150},
+            {"label": _("Department"), "fieldname": "department", "fieldtype": "Data", "width": 150},
             {"label": _("Designation"), "fieldname": "designation", "fieldtype": "Link", "options": "Designation", "width": 150},
             {"label": _("Level"), "fieldname": "level", "fieldtype": "Data", "width": 100},
             {"label": _("Company"), "fieldname": "company", "fieldtype": "Link", "options": "Company", "width": 150},
             {"label": _("Gross Pay"), "fieldname": "gross_pay", "fieldtype": "Float", "width": 120},
+            {"label": _("Nationality"), "fieldname": "nationality", "fieldtype": "Data", "width": 100},
             
             {"label": _("Increment"), "fieldname": "increment", "fieldtype": "Data", "width": 120},
             {"label": _("Promotion"), "fieldname": "promotion", "fieldtype": "Data", "width": 120},
@@ -102,6 +107,7 @@ def get_data(filters):
         SELECT 
             emp.name,
             emp.employee_name,
+            emp.department
             emp.designation,
             d.custom_level,
             emp.company,
@@ -141,19 +147,21 @@ def get_employee_budget_data(emp, filters):
     row = {
         'employee': emp.name,
         'employee_name': emp.employee_name,
+        'department': emp.department,
         'designation': emp.designation,
         'level': emp.custom_level,
         'company': emp.company,
         'gross_pay': emp.gross_pay,
         'no_of_family': no_of_family,
-        'medical_insurance': monthly_medical
+        'medical_insurance': monthly_medical,        
+        'nationality' = emp.nationality
+        
     }
 
 
     if filters.get("company") == "iValue KSA":
         row['basic'] = emp.Basic
         row['housing'] = emp.Housing
-        row['nationality'] = emp.nationality
 
         if emp.nationality == 'Saudi':
             row['gosi'] = ((emp.Basic + emp.Housing) * 0.1175)
