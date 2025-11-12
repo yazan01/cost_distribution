@@ -107,7 +107,7 @@ def get_data(filters):
         SELECT 
             emp.name,
             emp.employee_name,
-            emp.department
+            emp.department,
             emp.designation,
             d.custom_level,
             emp.company,
