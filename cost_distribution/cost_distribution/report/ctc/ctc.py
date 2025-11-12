@@ -220,6 +220,18 @@ def execute(filters=None):
                 if ctc_result:
                     level_proj_ctc = ctc_result[0].ctc
                     calculate_level = ctc_result[0].parent
+
+            # company level with -R if remotely
+            if not level_proj_ctc:
+                if ctc_company != "iValue KSA":
+                    ctc_result = frappe.db.sql("""
+                        SELECT ctc, parent FROM `tabLevel Rate` 
+                        WHERE parent = %s AND project IS NULL AND year = %s
+                    """, (level_to_search, year), as_dict=True)
+                    
+                    if ctc_result:
+                        level_proj_ctc = ctc_result[0].ctc
+                        calculate_level = ctc_result[0].parent
             
             # project level without -R
             if not level_proj_ctc:
