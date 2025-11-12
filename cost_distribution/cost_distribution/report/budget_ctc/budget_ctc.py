@@ -196,26 +196,36 @@ def get_employee_alocations(employee, company, employee_level):
         )
         
         if not ctc_proj:
-            # محاولة الحصول على CTC من المستوى بدون اللاحقة
-            ctc_proj_1 = frappe.db.sql(
+            ctc_proj_4 = frappe.db.sql(
                 """
-                SELECT ctc FROM `tabLevel Rate` WHERE parent = %s AND project = %s AND year = %s
+                SELECT ctc FROM `tabLevel Rate` WHERE parent = %s AND project IS NULL AND year = %s
                 """,
-                (employee_level, d.project, '2025'),
+                (level, '2025'),
                 as_dict=True,
             )
-            if not ctc_proj_1:
-                # الحصول على CTC الافتراضي للمستوى
-                ctc_proj_2 = frappe.db.sql(
+            if not ctc_proj_4:
+
+                ctc_proj_1 = frappe.db.sql(
                     """
-                    SELECT ctc FROM `tabLevel Rate` WHERE parent = %s AND project IS NULL AND year = %s
+                    SELECT ctc FROM `tabLevel Rate` WHERE parent = %s AND project = %s AND year = %s
                     """,
-                    (employee_level, '2025'),
+                    (employee_level, d.project, '2025'),
                     as_dict=True,
                 )
-                level_proj_ctc = ctc_proj_2[0].ctc if ctc_proj_2 else 0
+                if not ctc_proj_1:
+
+                    ctc_proj_2 = frappe.db.sql(
+                        """
+                        SELECT ctc FROM `tabLevel Rate` WHERE parent = %s AND project IS NULL AND year = %s
+                        """,
+                        (employee_level, '2025'),
+                        as_dict=True,
+                    )
+                    level_proj_ctc = ctc_proj_2[0].ctc if ctc_proj_2 else 0
+                else:
+                    level_proj_ctc = ctc_proj_1[0].ctc
             else:
-                level_proj_ctc = ctc_proj_1[0].ctc
+                level_proj_ctc = ctc_proj_4[0].ctc
         else:
             level_proj_ctc = ctc_proj[0].ctc
 
