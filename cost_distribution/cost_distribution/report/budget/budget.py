@@ -154,7 +154,7 @@ def get_employee_budget_data(emp, filters):
         'gross_pay': emp.gross_pay,
         'no_of_family': no_of_family,
         'medical_insurance': monthly_medical,        
-        'nationality' = emp.nationality
+        'nationality' : emp.nationality
         
     }
 
