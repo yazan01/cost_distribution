@@ -380,24 +380,34 @@ def get_time_sheet_summary(salary_data, cost_dist_doc):
                     as_dict=True,
                 )
                 if not ctc_proj:
-                    ctc_proj_1 = frappe.db.sql(
+                    ctc_proj_4 = frappe.db.sql(
                         """
-                        SELECT ctc FROM `tabLevel Rate` WHERE parent = %s AND project = %s AND year = %s
+                        SELECT ctc FROM `tabLevel Rate` WHERE parent = %s AND project IS NULL AND year = %s
                         """,
-                        (employee_level, d.project, year),
+                        (level, year),
                         as_dict=True,
                     )
-                    if not ctc_proj_1:
-                        ctc_proj_2 = frappe.db.sql(
+                    if not ctc_proj_4:
+                        ctc_proj_1 = frappe.db.sql(
                             """
-                            SELECT ctc FROM `tabLevel Rate` WHERE parent = %s AND project IS NULL AND year = %s
+                            SELECT ctc FROM `tabLevel Rate` WHERE parent = %s AND project = %s AND year = %s
                             """,
-                            (employee_level, year),
+                            (employee_level, d.project, year),
                             as_dict=True,
                         )
-                        level_proj_ctc = ctc_proj_2[0].ctc
+                        if not ctc_proj_1:
+                            ctc_proj_2 = frappe.db.sql(
+                                """
+                                SELECT ctc FROM `tabLevel Rate` WHERE parent = %s AND project IS NULL AND year = %s
+                                """,
+                                (employee_level, year),
+                                as_dict=True,
+                            )
+                            level_proj_ctc = ctc_proj_2[0].ctc
+                        else:
+                            level_proj_ctc = ctc_proj_1[0].ctc
                     else:
-                        level_proj_ctc = ctc_proj_1[0].ctc
+                        level_proj_ctc = ctc_proj_4[0].ctc
                 else:
                     level_proj_ctc = ctc_proj[0].ctc
 
