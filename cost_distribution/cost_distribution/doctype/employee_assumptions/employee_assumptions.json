@@ -59,7 +59,12 @@
       "fieldtype": "Link",
       "options": "Employee",
       "reqd": 1,
-      "in_list_view": 1
+      "get_query": {
+        "filters": [
+          ["employment_type", "=", "Permanent"],
+          ["status", "=", "Active"]
+        ]
+      }
     },
     {
       "fieldname": "employee_name",
