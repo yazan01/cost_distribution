@@ -1,0 +1,142 @@
+{
+  "name": "Employee Assumptions",
+  "doctype": "DocType",
+  "module": "Cost Distribution",
+  "custom": 1,
+  "autoname": "format:{year}-{employee}",
+  "naming_rule": "Expression",
+  "is_submittable": 0,
+  "issingle": 0,
+  "editable_grid": 0,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "engine": "InnoDB",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "permlevel": 0,
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    },
+    {
+      "role": "CEO",
+      "permlevel": 0,
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    }
+  ],
+  "fields": [
+    {
+      "fieldname": "year",
+      "label": "Year",
+      "fieldtype": "Link",
+      "options": "Fiscal Year",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "section_break_employee",
+      "label": "Employee Info",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "employee",
+      "label": "Employee",
+      "fieldtype": "Link",
+      "options": "Employee",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "employee_name",
+      "label": "Employee Name",
+      "fieldtype": "Data",
+      "fetch_from": "employee.custom_employee_full_name",
+      "read_only": 1
+    },
+    {
+      "fieldname": "column_break_emp1",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "company",
+      "label": "Company",
+      "fieldtype": "Link",
+      "options": "Company",
+      "fetch_from": "employee.company",
+      "read_only": 1
+    },
+    {
+      "fieldname": "designation",
+      "label": "Designation",
+      "fieldtype": "Link",
+      "options": "Designation",
+      "fetch_from": "employee.designation",
+      "read_only": 1
+    },
+    {
+      "fieldname": "level",
+      "label": "Level",
+      "fieldtype": "Link",
+      "options": "Levels",
+      "fetch_from": "designation.custom_level",
+      "read_only": 1
+    },
+    {
+      "fieldname": "section_break_assumptions",
+      "label": "Assumptions",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "percentage_increase",
+      "label": "Percentage Increase",
+      "fieldtype": "Percent",
+      "precision": "2",
+      "reqd": 1,
+      "default": "0"
+    },
+    {
+      "fieldname": "traning_cost",
+      "label": "Training Cost",
+      "fieldtype": "Float",
+      "precision": "2",
+      "default": "0"
+    },
+    {
+      "fieldname": "eos",
+      "label": "EOS",
+      "fieldtype": "Float",
+      "precision": "2"
+    },
+    {
+      "fieldname": "column_break_assumptions",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "promotion_level",
+      "label": "Promotion Level",
+      "fieldtype": "Link",
+      "options": "Levels"
+    },
+    {
+      "fieldname": "yearly_bonus",
+      "label": "Yearly Bonus",
+      "fieldtype": "Float",
+      "precision": "2"
+    }
+  ]
+}
