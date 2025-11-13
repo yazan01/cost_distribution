@@ -110,16 +110,13 @@
       "fieldname": "percentage_increase",
       "label": "Percentage Increase",
       "fieldtype": "Percent",
-      "precision": "2",
-      "reqd": 1,
-      "default": "0"
+      "precision": "2"
     },
     {
       "fieldname": "traning_cost",
       "label": "Training Cost",
       "fieldtype": "Float",
-      "precision": "2",
-      "default": "0"
+      "precision": "2"
     },
     {
       "fieldname": "eos",
@@ -140,6 +137,18 @@
     {
       "fieldname": "yearly_bonus",
       "label": "Yearly Bonus",
+      "fieldtype": "Float",
+      "precision": "2"
+    },
+    {
+      "fieldname": "yearly_visa",
+      "label": "Yearly Visa",
+      "fieldtype": "Float",
+      "precision": "2"
+    },
+    {
+      "fieldname": "yearly_iqama",
+      "label": "Yearly Iqama",
       "fieldtype": "Float",
       "precision": "2"
     }
