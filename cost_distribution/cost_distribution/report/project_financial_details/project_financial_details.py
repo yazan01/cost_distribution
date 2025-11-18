@@ -140,7 +140,7 @@ def get_indirect_cost_entries(project_id, from_date, to_date):
             AND gl.docstatus = 1 
             AND gl.is_cancelled = 0 
             AND gl.account LIKE %s
-            AND gl.remarks NOT REGEXP "Cost Distribution" AND gl.remarks NOT REGEXP "CAPITALIZATION"
+            AND gl.remarks NOT REGEXP "Cost Distribution POP" AND gl.remarks NOT REGEXP "CAPITALIZATION"
         ORDER BY gl.posting_date
     """, (project_id, from_date, to_date, "5%"), as_dict=True)
     
