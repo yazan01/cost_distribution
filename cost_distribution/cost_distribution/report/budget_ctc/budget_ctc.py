@@ -182,7 +182,11 @@ def get_employee_alocations(employee, company, employee_level):
 
         # تحديد المستوى بناءً على الشركة
         if company != "iValue KSA":
-            level = f"{employee_level}-R"
+            if employee_level == "Partner" and employee not in ['HR-EMP-00052', 'HR-EMP-00169']:
+                level = f"{employee_level}"
+            else:
+                level = f"{employee_level}-R"
+            # level = f"{employee_level}-R"
         else:
             level = f"{employee_level}"
                 
