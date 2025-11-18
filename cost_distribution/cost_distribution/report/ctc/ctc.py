@@ -145,7 +145,7 @@ def execute(filters=None):
             AND gl.posting_date BETWEEN %(from_date)s AND %(to_date)s
 			AND pro.project_manager IN %(manager)s
 			AND pro.project_type IN %(type)s
-            AND gl.remarks NOT REGEXP "Cost Distribution" AND gl.remarks NOT REGEXP "CAPITALIZATION"
+            AND gl.remarks NOT REGEXP "Cost Distribution POP" AND gl.remarks NOT REGEXP "CAPITALIZATION"
         GROUP BY
             afc.account, gl.project;
     """, {
