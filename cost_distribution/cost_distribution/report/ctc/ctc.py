@@ -201,7 +201,11 @@ def execute(filters=None):
             
             # Determine the correct level based on status
             if ctc_company != "iValue KSA":
-                level_to_search = f"{employee_level}-R"
+                if employee_level == "Partner" and emp not in ['HR-EMP-00052', 'HR-EMP-00169']:
+                    level_to_search = f"{employee_level}"
+                else:
+                    level_to_search = f"{employee_level}-R"
+                # level_to_search = f"{employee_level}-R"
             else:
                 level_to_search = employee_level
             
