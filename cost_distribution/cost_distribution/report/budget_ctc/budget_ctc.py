@@ -29,22 +29,43 @@ def get_columns():
         {"label": _("Projects"), "fieldname": "projects", "fieldtype": "Data", "width": 150},
 
         {"label": _("Total CTC"), "fieldname": "total_ctc", "fieldtype": "Float", "width": 120},
+        {"label": _("Total Billing"), "fieldname": "total_billing", "fieldtype": "Float", "width": 120},
 
-        {"label": _("Jan 2026"), "fieldname": "jan", "fieldtype": "Float", "width": 120},
-        {"label": _("Feb 2026"), "fieldname": "feb", "fieldtype": "Float", "width": 120},
-        {"label": _("Mar 2026"), "fieldname": "mar", "fieldtype": "Float", "width": 100},
+        {"label": _("CTC Jan 2026"), "fieldname": "jan", "fieldtype": "Float", "width": 120},
+        {"label": _("Billing Jan 2026"), "fieldname": "jan_billing", "fieldtype": "Float", "width": 120},
 
-        {"label": _("Apr 2026"), "fieldname": "apr", "fieldtype": "Float", "width": 120},
-        {"label": _("May 2026"), "fieldname": "may", "fieldtype": "Float", "width": 120},
-        {"label": _("Jun 2026"), "fieldname": "jun", "fieldtype": "Float", "width": 100},
+        {"label": _("CTC Feb 2026"), "fieldname": "feb", "fieldtype": "Float", "width": 120},
+        {"label": _("Billing Feb 2026"), "fieldname": "feb_billing", "fieldtype": "Float", "width": 120},
 
-        {"label": _("Jul 2026"), "fieldname": "jul", "fieldtype": "Float", "width": 120},
-        {"label": _("Aug 2026"), "fieldname": "aug", "fieldtype": "Float", "width": 120},
-        {"label": _("Sep 2026"), "fieldname": "sep", "fieldtype": "Float", "width": 100},
+        {"label": _("CTC Mar 2026"), "fieldname": "mar", "fieldtype": "Float", "width": 120},
+        {"label": _("Billing Mar 2026"), "fieldname": "mar_billing", "fieldtype": "Float", "width": 120},
 
-        {"label": _("Oct 2026"), "fieldname": "oct", "fieldtype": "Float", "width": 120},
-        {"label": _("Nov 2026"), "fieldname": "nov", "fieldtype": "Float", "width": 120},
-        {"label": _("Dec 2026"), "fieldname": "dec", "fieldtype": "Float", "width": 100},
+        {"label": _("CTC Apr 2026"), "fieldname": "apr", "fieldtype": "Float", "width": 120},
+        {"label": _("Billing Apr 2026"), "fieldname": "apr_billing", "fieldtype": "Float", "width": 120},
+
+        {"label": _("CTC May 2026"), "fieldname": "may", "fieldtype": "Float", "width": 120},
+        {"label": _("Billing May 2026"), "fieldname": "may_billing", "fieldtype": "Float", "width": 120},
+
+        {"label": _("CTC Jun 2026"), "fieldname": "jun", "fieldtype": "Float", "width": 120},
+        {"label": _("Billing Jun 2026"), "fieldname": "jun_billing", "fieldtype": "Float", "width": 120},
+
+        {"label": _("CTC Jul 2026"), "fieldname": "jul", "fieldtype": "Float", "width": 120},
+        {"label": _("Billing Jul 2026"), "fieldname": "jul_billing", "fieldtype": "Float", "width": 120},
+
+        {"label": _("CTC Aug 2026"), "fieldname": "aug", "fieldtype": "Float", "width": 120},
+        {"label": _("Billing Aug 2026"), "fieldname": "aug_billing", "fieldtype": "Float", "width": 120},
+
+        {"label": _("CTC Sep 2026"), "fieldname": "sep", "fieldtype": "Float", "width": 120},
+        {"label": _("Billing Sep 2026"), "fieldname": "sep_billing", "fieldtype": "Float", "width": 120},
+
+        {"label": _("CTC Oct 2026"), "fieldname": "oct", "fieldtype": "Float", "width": 120},
+        {"label": _("Billing Oct 2026"), "fieldname": "oct_billing", "fieldtype": "Float", "width": 120},
+
+        {"label": _("CTC Nov 2026"), "fieldname": "nov", "fieldtype": "Float", "width": 120},
+        {"label": _("Billing Nov 2026"), "fieldname": "nov_billing", "fieldtype": "Float", "width": 120},
+
+        {"label": _("CTC Dec 2026"), "fieldname": "dec", "fieldtype": "Float", "width": 120},  
+        {"label": _("Billing Dec 2026"), "fieldname": "dec_billing", "fieldtype": "Float", "width": 120},
     ]
     
     return columns
@@ -119,7 +140,20 @@ def get_employee_budget_data(emp, filters):
             'oct': allocation.get('oct', 0),
             'nov': allocation.get('nov', 0),
             'dec': allocation.get('dec', 0),
-            'total_ctc': allocation.get('total_ctc', 0)
+            'total_ctc': allocation.get('total_ctc', 0),
+            'jan_billing': allocation.get('jan_billing', 0),
+            'feb_billing': allocation.get('feb_billing', 0),
+            'mar_billing': allocation.get('mar_billing', 0),
+            'apr_billing': allocation.get('apr_billing', 0),
+            'may_billing': allocation.get('may_billing', 0),
+            'jun_billing': allocation.get('jun_billing', 0),
+            'jul_billing': allocation.get('jul_billing', 0),
+            'aug_billing': allocation.get('aug_billing', 0),
+            'sep_billing': allocation.get('sep_billing', 0),
+            'oct_billing': allocation.get('oct_billing', 0),
+            'nov_billing': allocation.get('nov_billing', 0),
+            'dec_billing': allocation.get('dec_billing', 0),
+            'total_billing': allocation.get('total_billing', 0)
         }
         all_rows.append(row)
     
@@ -146,7 +180,20 @@ def get_employee_budget_data(emp, filters):
             'oct': bench.get('oct', 0),
             'nov': bench.get('nov', 0),
             'dec': bench.get('dec', 0),
-            'total_ctc': bench.get('total_ctc', 0)
+            'total_ctc': bench.get('total_ctc', 0),
+            'jan_billing': bench.get('jan_billing', 0),
+            'feb_billing': bench.get('feb_billing', 0),
+            'mar_billing': bench.get('mar_billing', 0),
+            'apr_billing': bench.get('apr_billing', 0),
+            'may_billing': bench.get('may_billing', 0),
+            'jun_billing': bench.get('jun_billing', 0),
+            'jul_billing': bench.get('jul_billing', 0),
+            'aug_billing': bench.get('aug_billing', 0),
+            'sep_billing': bench.get('sep_billing', 0),
+            'oct_billing': bench.get('oct_billing', 0),
+            'nov_billing': bench.get('nov_billing', 0),
+            'dec_billing': bench.get('dec_billing', 0),
+            'total_billing': bench.get('total_billing', 0)
         }
         all_rows.append(row)
     
@@ -179,6 +226,7 @@ def get_employee_alocations(employee, company, employee_level):
 
     for d in employee_alocations:
         level_proj_ctc = 0
+        level_proj_billing = 0
 
         # تحديد المستوى بناءً على الشركة
         if company != "iValue KSA":
@@ -193,7 +241,7 @@ def get_employee_alocations(employee, company, employee_level):
         # محاولة الحصول على CTC من المستوى مع اللاحقة
         ctc_proj = frappe.db.sql(
             """
-            SELECT ctc FROM `tabLevel Rate` WHERE parent = %s AND project = %s AND year = %s
+            SELECT ctc, billing FROM `tabLevel Rate` WHERE parent = %s AND project = %s AND year = %s
             """,
             (level, d.project, '2025'),
             as_dict=True,
@@ -202,7 +250,7 @@ def get_employee_alocations(employee, company, employee_level):
         if not ctc_proj:
             ctc_proj_4 = frappe.db.sql(
                 """
-                SELECT ctc FROM `tabLevel Rate` WHERE parent = %s AND project IS NULL AND year = %s
+                SELECT ctc, billing FROM `tabLevel Rate` WHERE parent = %s AND project IS NULL AND year = %s
                 """,
                 (level, '2025'),
                 as_dict=True,
@@ -211,7 +259,7 @@ def get_employee_alocations(employee, company, employee_level):
 
                 ctc_proj_1 = frappe.db.sql(
                     """
-                    SELECT ctc FROM `tabLevel Rate` WHERE parent = %s AND project = %s AND year = %s
+                    SELECT ctc, billing FROM `tabLevel Rate` WHERE parent = %s AND project = %s AND year = %s
                     """,
                     (employee_level, d.project, '2025'),
                     as_dict=True,
@@ -220,18 +268,22 @@ def get_employee_alocations(employee, company, employee_level):
 
                     ctc_proj_2 = frappe.db.sql(
                         """
-                        SELECT ctc FROM `tabLevel Rate` WHERE parent = %s AND project IS NULL AND year = %s
+                        SELECT ctc, billing FROM `tabLevel Rate` WHERE parent = %s AND project IS NULL AND year = %s
                         """,
                         (employee_level, '2025'),
                         as_dict=True,
                     )
-                    level_proj_ctc = ctc_proj_2[0].ctc if ctc_proj_2 else 0
+                    level_proj_ctc = ctc_proj_2[0].ctc
+                    level_proj_billing = ctc_proj_2[0].billing
                 else:
                     level_proj_ctc = ctc_proj_1[0].ctc
+                    level_proj_billing = ctc_proj_1[0].billing
             else:
                 level_proj_ctc = ctc_proj_4[0].ctc
+                level_proj_billing = ctc_proj_4[0].billing
         else:
             level_proj_ctc = ctc_proj[0].ctc
+            level_proj_billing = ctc_proj[0].billing
 
         # حساب التكلفة لكل شهر
         monthly_costs = calculate_monthly_costs(
@@ -240,13 +292,22 @@ def get_employee_alocations(employee, company, employee_level):
             getdate(d.get('start_date')) if d.get('start_date') else date(2026, 1, 1),
             getdate(d.end_date)
         )
+
+        billing_months = calculate_monthly_billing(
+            level_proj_billing,
+            d.allocation_percentage,
+            getdate(d.get('start_date')) if d.get('start_date') else date(2026, 1, 1),
+            getdate(d.end_date)
+        )
+
         
         project_row = {
             'project': d.project,
             'project_name': d.project_name,
             'allocation_percentage': d.allocation_percentage,
             'end_date': d.end_date,
-            **monthly_costs
+            **monthly_costs,
+            **billing_months
         }
         
         project_rows.append(project_row)
@@ -308,6 +369,46 @@ def calculate_monthly_costs(monthly_ctc, allocation_percentage, start_date, end_
     return monthly_costs
 
 
+def calculate_monthly_billing(monthly_billing, allocation_percentage, start_date, end_date):
+    monthly_vals = {
+        'jan_billing': 0, 'feb_billing': 0, 'mar_billing': 0, 'apr_billing': 0,
+        'may_billing': 0, 'jun_billing': 0, 'jul_billing': 0, 'aug_billing': 0,
+        'sep_billing': 0, 'oct_billing': 0, 'nov_billing': 0, 'dec_billing': 0,
+        'total_billing': 0
+    }
+
+    months_map = {
+        1: 'jan_billing', 2: 'feb_billing', 3: 'mar_billing', 4: 'apr_billing',
+        5: 'may_billing', 6: 'jun_billing', 7: 'jul_billing', 8: 'aug_billing',
+        9: 'sep_billing', 10: 'oct_billing', 11: 'nov_billing', 12: 'dec_billing'
+    }
+
+    allocation_ratio = flt(allocation_percentage) / 100
+
+    for month_num in range(1, 12 + 1):
+        month_start = date(2026, month_num, 1)
+        month_end = date(2026, month_num, 28 if month_num == 2 else (
+            30 if month_num in [4,6,9,11] else 31))
+
+        period_start = max(month_start, start_date)
+        period_end = min(month_end, end_date)
+
+        if period_start <= period_end:
+            total_working = get_working_days_in_month(2026, month_num)
+            allocated_working = get_working_days_between(period_start, period_end)
+
+            daily_billing = monthly_billing / total_working if total_working > 0 else 0
+            cost = daily_billing * allocated_working * allocation_ratio
+
+            key = months_map[month_num]
+            monthly_vals[key] = cost
+            monthly_vals['total_billing'] += cost
+
+    return monthly_vals
+
+
+
+
 def get_working_days_in_month(year, month):
     """
     حساب عدد أيام العمل في الشهر (بدون الجمعة والسبت)
@@ -367,7 +468,7 @@ def get_bench_periods(employee, company, employee_level, unit):
     # الحصول على CTC الافتراضي
     company_ctc = frappe.db.sql("""
         SELECT 
-            ctc
+            ctc, billing
         FROM 
             `tabLevel Rate`
         WHERE 
@@ -377,6 +478,7 @@ def get_bench_periods(employee, company, employee_level, unit):
     """, (employee_level), as_dict=1)
     
     ctc_value = company_ctc[0].ctc if company_ctc else 0
+    billing_value = company_ctc[0].billing if company_ctc else 0
     
     bench_rows = []
     year_start = date(2026, 1, 1)
@@ -390,13 +492,22 @@ def get_bench_periods(employee, company, employee_level, unit):
             year_start,
             year_end
         )
+
+        billing_costs = calculate_monthly_billing(
+            billing_value, 
+            100, 
+            year_start,
+            year_end
+        )
+
         
         bench_rows.append({
             'project': 'Bench' if unit == 'Consultant' else 'Overhead',
             'project_name': 'Bench' if unit == 'Consultant' else 'Overhead',
             'allocation_percentage': 100,
             'end_date': year_end,
-            **monthly_costs
+            **monthly_costs,
+            **billing_costs
         })
         
         return bench_rows
@@ -411,13 +522,22 @@ def get_bench_periods(employee, company, employee_level, unit):
             year_start,
             first_allocation_start - timedelta(days=1)
         )
+
+        billing_costs = calculate_monthly_billing(
+            billing_value, 
+            100, 
+            year_start,
+            first_allocation_start - timedelta(days=1)
+        )
+
         
         bench_rows.append({
             'project': 'Bench' if unit == 'Consultant' else 'Overhead',
             'project_name': 'Bench' if unit == 'Consultant' else 'Overhead',
             'allocation_percentage': 100,
             'end_date': first_allocation_start - timedelta(days=1),
-            **monthly_costs
+            **monthly_costs,
+            **billing_costs
         })
     
     # فحص الفجوات بين التخصيصات
@@ -436,12 +556,20 @@ def get_bench_periods(employee, company, employee_level, unit):
                 min(gap_end, year_end)
             )
             
+            billing_costs = calculate_monthly_billing(
+                billing_value, 
+                100, 
+                gap_start,
+                min(gap_end, year_end)
+            )
+
             bench_rows.append({
                 'project': 'Bench' if unit == 'Consultant' else 'Overhead',
                 'project_name': 'Bench' if unit == 'Consultant' else 'Overhead',
                 'allocation_percentage': 100,
                 'end_date': min(gap_end, year_end),
-                **monthly_costs
+                **monthly_costs,
+                **billing_costs
             })
     
     # فحص الفترة من آخر تخصيص إلى نهاية السنة
@@ -454,13 +582,21 @@ def get_bench_periods(employee, company, employee_level, unit):
             last_allocation_end + timedelta(days=1),
             year_end
         )
+
+        billing_costs = calculate_monthly_billing(
+            billing_value, 
+            100, 
+            last_allocation_end + timedelta(days=1),
+            year_end
+        )
         
         bench_rows.append({
             'project': 'Bench' if unit == 'Consultant' else 'Overhead',
             'project_name': 'Bench' if unit == 'Consultant' else 'Overhead',
             'allocation_percentage': 100,
             'end_date': year_end,
-            **monthly_costs
+            **monthly_costs,
+            **billing_costs
         })
     
     return bench_rows
