@@ -195,7 +195,7 @@ def get_employee_budget_data(emp, filters):
         FROM 
             `tabEmployee Assumptions` AS eass
         WHERE 
-            eass.year = '2025'
+            eass.year = '2026'
             AND eass.employee = %s;
     """, (emp.name,), as_dict=1)
 
