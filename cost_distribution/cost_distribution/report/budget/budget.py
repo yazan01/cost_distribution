@@ -102,14 +102,14 @@ def get_columns(filters):
 
 def get_data(filters):
     conditions = get_conditions(filters)
-    
+
     employees = frappe.db.sql("""
         SELECT 
             emp.name,
             emp.employee_name,
             emp.department,
             emp.designation,
-            d.custom_level,
+            emp.custom_linked_level,
             emp.company,
             (emp.custom_base + emp.custom_housing + emp.custom_transportation + emp.custom_other_allowance) AS 'gross_pay',
             emp.custom_base AS 'Basic',
@@ -117,10 +117,6 @@ def get_data(filters):
             emp.nationality
         FROM 
             `tabEmployee` emp
-        JOIN 
-            `tabDesignation` d
-        ON 
-            d.name = emp.designation 
         WHERE 
             emp.status = 'Active'
             AND emp.employment_type = 'Permanent'
@@ -128,6 +124,32 @@ def get_data(filters):
         ORDER BY 
             emp.name
     """.format(conditions=conditions), filters, as_dict=1)
+    
+    # employees = frappe.db.sql("""
+    #     SELECT 
+    #         emp.name,
+    #         emp.employee_name,
+    #         emp.department,
+    #         emp.designation,
+    #         d.custom_level,
+    #         emp.company,
+    #         (emp.custom_base + emp.custom_housing + emp.custom_transportation + emp.custom_other_allowance) AS 'gross_pay',
+    #         emp.custom_base AS 'Basic',
+    #         emp.custom_housing AS 'Housing',
+    #         emp.nationality
+    #     FROM 
+    #         `tabEmployee` emp
+    #     JOIN 
+    #         `tabDesignation` d
+    #     ON 
+    #         d.name = emp.designation 
+    #     WHERE 
+    #         emp.status = 'Active'
+    #         AND emp.employment_type = 'Permanent'
+    #         {conditions}
+    #     ORDER BY 
+    #         emp.name
+    # """.format(conditions=conditions), filters, as_dict=1)
     
     data = []
     
@@ -149,7 +171,7 @@ def get_employee_budget_data(emp, filters):
         'employee_name': emp.employee_name,
         'department': emp.department,
         'designation': emp.designation,
-        'level': emp.custom_level,
+        'level': emp.custom_linked_level,
         'company': emp.company,
         'gross_pay': emp.gross_pay,
         'no_of_family': no_of_family,
@@ -158,6 +180,48 @@ def get_employee_budget_data(emp, filters):
         
     }
 
+    total = emp.gross_pay + monthly_medical
+
+    family_members = frappe.db.sql("""
+        SELECT  
+            eass.percentage_increase, 
+            eass.traning_cost, 
+            eass.eos, 
+            eass.promotion_level, 
+            eass.yearly_bonus, 
+            eass.yearly_visa, 
+            eass.yearly_iqama,
+            eass.penalty
+        FROM 
+            `tabEmployee Assumptions` AS eass
+        WHERE 
+            eass.year = '2025'
+            AND eass.employee = %s;
+    """, (emp.name,), as_dict=1)
+
+    if family_members:
+        fm = family_members[0]
+
+        percentage_increase = fm.percentage_increase
+        traning_cost = fm.traning_cost
+        eos = fm.eos
+        promotion_level = fm.promotion_level
+        yearly_bonus = fm.yearly_bonus
+        yearly_visa = fm.yearly_visa
+        yearly_iqama = fm.yearly_iqama
+        penalty = fm.penalty
+
+        row['increment'] = (emp.gross_pay * (percentage_increase / 100))
+        row['promotion'] = promotion_level
+        row['iqama_cost'] = (yearly_iqama / 12)
+        row['visa'] = (yearly_visa / 12)
+        row['training_cost'] = (traning_cost / 12)
+        row['Penalty'] = (penalty / 12)
+        row['EOS'] = (eos / 12)
+        row['yearly_bonus'] = (yearly_bonus / 12)
+
+
+        total = total + row['increment'] + row['iqama_cost'] + row['visa'] + row['training_cost'] + row['Penalty'] + row['EOS'] + row['yearly_bonus']
 
     if filters.get("company") == "iValue KSA":
         row['basic'] = emp.Basic
@@ -168,14 +232,35 @@ def get_employee_budget_data(emp, filters):
         else:            
             row['gosi'] = ((emp.Basic + emp.Housing) * 0.02)
 
-        row['ticket'] = (no_of_family * 2000)
+        row['ticket'] = ((no_of_family * 2000) / 12)
+
+
+        total = total + row['gosi'] + row['ticket']
+
+        row['wht'] = 0
+        row['total'] = (total + row['wht'])
+
+
     
     elif filters.get("company") == "iValueJOR":
         row['social_security'] = (emp.gross_pay * 0.1425)
-        row['ticket'] = (no_of_family * 377.35)
+        row['ticket'] = ((no_of_family * 377.35) / 12)
+
+        total = total + row['social_security'] + row['ticket']
+
+        row['wht'] = (total * (5/100))
+        row['total'] = (total + row['wht'])
+
+
 
     elif filters.get("company") == "iValueUAE":
-        row['ticket'] = (no_of_family * 2040.81)
+        row['ticket'] = ((no_of_family * 2040.81) / 12)
+
+        total = total + row['ticket']
+
+        row['wht'] = (total * (5/100))
+        row['total'] = (total + row['wht'])
+
   
     return row
 
