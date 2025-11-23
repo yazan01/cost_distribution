@@ -221,7 +221,7 @@ def get_employee_budget_data(emp, filters):
         row['yearly_bonus'] = (yearly_bonus / 12)
 
 
-        total = total + row['increment'] + row['iqama_cost'] + row['visa'] + row['training_cost'] + row['penalty'] + row['EOS'] + row['yearly_bonus']
+        total = total + row['increment'] + row['iqama_cost'] + row['visa'] + row['training_cost'] + row['penalty'] + row['eos'] + row['yearly_bonus']
 
     if filters.get("company") == "iValue KSA":
         row['basic'] = emp.Basic
