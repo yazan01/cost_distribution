@@ -98,7 +98,7 @@
       "label": "Level",
       "fieldtype": "Link",
       "options": "Levels",
-      "fetch_from": "designation.custom_level",
+      "fetch_from": "employee.custom_linked_level",
       "read_only": 1
     },
     {
@@ -121,6 +121,12 @@
     {
       "fieldname": "eos",
       "label": "EOS",
+      "fieldtype": "Float",
+      "precision": "2"
+    },
+    {
+      "fieldname": "penalty",
+      "label": "Penalty",
       "fieldtype": "Float",
       "precision": "2"
     },
