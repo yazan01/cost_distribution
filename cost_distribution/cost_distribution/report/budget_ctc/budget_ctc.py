@@ -80,15 +80,11 @@ def get_data(filters):
             emp.employee_name,
             emp.department,
             emp.designation,
-            d.custom_level,
+            emp.custom_linked_level,
             emp.company,
             emp.custom_supporting_services__consultant AS unit
         FROM 
             `tabEmployee` emp
-        JOIN 
-            `tabDesignation` d
-        ON 
-            d.name = emp.designation 
         WHERE 
             emp.status = 'Active'
             AND emp.employment_type = 'Permanent'
@@ -96,6 +92,29 @@ def get_data(filters):
         ORDER BY 
             emp.name
     """.format(conditions=conditions), filters, as_dict=1)
+
+    # employees = frappe.db.sql("""
+    #     SELECT 
+    #         emp.name,
+    #         emp.employee_name,
+    #         emp.department,
+    #         emp.designation,
+    #         d.custom_level,
+    #         emp.company,
+    #         emp.custom_supporting_services__consultant AS unit
+    #     FROM 
+    #         `tabEmployee` emp
+    #     JOIN 
+    #         `tabDesignation` d
+    #     ON 
+    #         d.name = emp.designation 
+    #     WHERE 
+    #         emp.status = 'Active'
+    #         AND emp.employment_type = 'Permanent'
+    #         {conditions}
+    #     ORDER BY 
+    #         emp.name
+    # """.format(conditions=conditions), filters, as_dict=1)
     
     data = []
     
@@ -109,10 +128,10 @@ def get_data(filters):
 def get_employee_budget_data(emp, filters):
     
     # الحصول على تخصيصات المشاريع
-    project_allocations = get_employee_alocations(emp.name, emp.company, emp.custom_level)
+    project_allocations = get_employee_alocations(emp.name, emp.company, emp.custom_linked_level)
     
     # الحصول على فترات Bench
-    bench_periods = get_bench_periods(emp.name, emp.company, emp.custom_level, emp.unit)
+    bench_periods = get_bench_periods(emp.name, emp.company, emp.custom_linked_level, emp.unit)
     
     # دمج جميع السطور
     all_rows = []
@@ -124,7 +143,7 @@ def get_employee_budget_data(emp, filters):
             'employee_name': emp.employee_name,
             'department': emp.department,
             'designation': emp.designation,
-            'level': emp.custom_level,
+            'level': f"{allocation['p_level']}",
             'company': emp.company,
             'custom_supporting_services__consultant': emp.unit,
             'projects': f"{allocation['project']} {allocation['project_name']} ({allocation['allocation_percentage']}%)",
@@ -164,7 +183,7 @@ def get_employee_budget_data(emp, filters):
             'employee_name': emp.employee_name,
             'department': emp.department,
             'designation': emp.designation,
-            'level': emp.custom_level,
+            'level': emp.custom_linked_level,
             'company': emp.company,
             'custom_supporting_services__consultant': emp.unit,
             'projects': bench['project_name'],
@@ -275,15 +294,19 @@ def get_employee_alocations(employee, company, employee_level):
                     )
                     level_proj_ctc = ctc_proj_2[0].ctc
                     level_proj_billing = ctc_proj_2[0].billing
+                    show_level = employee_level
                 else:
                     level_proj_ctc = ctc_proj_1[0].ctc
                     level_proj_billing = ctc_proj_1[0].billing
+                    show_level = employee_level
             else:
                 level_proj_ctc = ctc_proj_4[0].ctc
                 level_proj_billing = ctc_proj_4[0].billing
+                show_level = level
         else:
             level_proj_ctc = ctc_proj[0].ctc
             level_proj_billing = ctc_proj[0].billing
+            show_level = level
 
         # حساب التكلفة لكل شهر
         monthly_costs = calculate_monthly_costs(
@@ -305,6 +328,7 @@ def get_employee_alocations(employee, company, employee_level):
             'project': d.project,
             'project_name': d.project_name,
             'allocation_percentage': d.allocation_percentage,
+            'p_level' : show_level,
             'end_date': d.end_date,
             **monthly_costs,
             **billing_months
