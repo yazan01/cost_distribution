@@ -25,24 +25,24 @@ def get_columns(filters):
             {"label": _("Designation"), "fieldname": "designation", "fieldtype": "Link", "options": "Designation", "width": 150},
             {"label": _("Level"), "fieldname": "level", "fieldtype": "Data", "width": 100},
             {"label": _("Company"), "fieldname": "company", "fieldtype": "Link", "options": "Company", "width": 150},
-            {"label": _("Gross Pay"), "fieldname": "gross_pay", "fieldtype": "Float", "width": 120},
-            {"label": _("Basic"), "fieldname": "basic", "fieldtype": "Float", "width": 120},
-            {"label": _("Housing"), "fieldname": "housing", "fieldtype": "Float", "width": 120},
+            {"label": _("Gross Pay"), "fieldname": "gross_pay", "fieldtype": "Float", "precision": 2, "width": 120},
+            {"label": _("Basic"), "fieldname": "basic", "fieldtype": "Float", "precision": 2, "width": 120},
+            {"label": _("Housing"), "fieldname": "housing", "fieldtype": "Float", "precision": 2, "width": 120},
             {"label": _("Nationality"), "fieldname": "nationality", "fieldtype": "Data", "width": 100},
-            {"label": _("GOSI amount for the company"), "fieldname": "gosi", "fieldtype": "Float", "width": 150},
-            {"label": _("Increment"), "fieldname": "increment", "fieldtype": "Data", "width": 120},
+            {"label": _("GOSI amount for the company"), "fieldname": "gosi", "fieldtype": "Float", "precision": 2, "width": 150},
+            {"label": _("Increment"), "fieldname": "increment", "fieldtype": "Float", "precision": 2, "width": 120},
             {"label": _("Promotion"), "fieldname": "promotion", "fieldtype": "Data", "width": 120},
-            {"label": _("Medical Insurance / Month"), "fieldname": "medical_insurance", "fieldtype": "Float", "width": 150},
+            {"label": _("Medical Insurance / Month"), "fieldname": "medical_insurance", "fieldtype": "Float", "precision": 2, "width": 150},
             {"label": _("No of Family"), "fieldname": "no_of_family", "fieldtype": "Int", "width": 100},
-            {"label": _("Ticket"), "fieldname": "ticket", "fieldtype": "Float", "width": 120},
-            {"label": _("Iqama Cost / Month"), "fieldname": "iqama_cost", "fieldtype": "Data", "width": 150},
-            {"label": _("VISA"), "fieldname": "visa", "fieldtype": "Data", "width": 120},
-            {"label": _("Training cost / month"), "fieldname": "training_cost", "fieldtype": "Data", "width": 150},
-            {"label": _("Penalty"), "fieldname": "penalty", "fieldtype": "Data", "width": 120},
-            {"label": _("EOS"), "fieldname": "eos", "fieldtype": "Data", "width": 120},
-            {"label": _("Yearly Bonus / Month"), "fieldname": "yearly_bonus", "fieldtype": "Data", "width": 150},
-            {"label": _("WHT"), "fieldname": "wht", "fieldtype": "Data", "width": 120},
-            {"label": _("Total"), "fieldname": "total", "fieldtype": "Data", "width": 150}
+            {"label": _("Ticket"), "fieldname": "ticket", "fieldtype": "Float", "precision": 2, "width": 120},
+            {"label": _("Iqama Cost / Month"), "fieldname": "iqama_cost", "fieldtype": "Float", "precision": 2, "width": 150},
+            {"label": _("VISA"), "fieldname": "visa", "fieldtype": "Float", "precision": 2, "width": 120},
+            {"label": _("Training cost / month"), "fieldname": "training_cost", "fieldtype": "Float", "precision": 2, "width": 150},
+            {"label": _("Penalty"), "fieldname": "penalty", "fieldtype": "Float", "precision": 2, "width": 120},
+            {"label": _("EOS"), "fieldname": "eos", "fieldtype": "Float", "precision": 2, "width": 120},
+            {"label": _("Yearly Bonus / Month"), "fieldname": "yearly_bonus", "fieldtype": "Float", "precision": 2, "width": 150},
+            {"label": _("WHT"), "fieldname": "wht", "fieldtype": "Float", "precision": 2, "width": 120},
+            {"label": _("Total"), "fieldname": "total", "fieldtype": "Float", "precision": 2, "width": 150}
         ]
     elif filters.get("company") == "iValueJOR":
         columns = [
@@ -52,24 +52,24 @@ def get_columns(filters):
             {"label": _("Designation"), "fieldname": "designation", "fieldtype": "Link", "options": "Designation", "width": 150},
             {"label": _("Level"), "fieldname": "level", "fieldtype": "Data", "width": 100},
             {"label": _("Company"), "fieldname": "company", "fieldtype": "Link", "options": "Company", "width": 150},
-            {"label": _("Gross Pay"), "fieldname": "gross_pay", "fieldtype": "Float", "width": 120},
+            {"label": _("Gross Pay"), "fieldname": "gross_pay", "fieldtype": "Float", "precision": 2, "width": 120},
             {"label": _("Nationality"), "fieldname": "nationality", "fieldtype": "Data", "width": 100},
             
-            {"label": _("Social Security amount for the company"), "fieldname": "social_security", "fieldtype": "Float", "width": 150},
+            {"label": _("Social Security amount for the company"), "fieldname": "social_security", "fieldtype": "Float", "precision": 2, "width": 150},
 
-            {"label": _("Increment"), "fieldname": "increment", "fieldtype": "Data", "width": 120},
+            {"label": _("Increment"), "fieldname": "increment", "fieldtype": "Float", "precision": 2, "width": 120},
             {"label": _("Promotion"), "fieldname": "promotion", "fieldtype": "Data", "width": 120},
-            {"label": _("Medical Insurance / Month"), "fieldname": "medical_insurance", "fieldtype": "Float", "width": 150},
+            {"label": _("Medical Insurance / Month"), "fieldname": "medical_insurance", "fieldtype": "Float", "precision": 2, "width": 150},
             {"label": _("No of Family"), "fieldname": "no_of_family", "fieldtype": "Int", "width": 100},
-            {"label": _("Ticket"), "fieldname": "ticket", "fieldtype": "Float", "width": 120},
-            {"label": _("Iqama Cost / Month"), "fieldname": "iqama_cost", "fieldtype": "Data", "width": 150},
-            {"label": _("VISA"), "fieldname": "visa", "fieldtype": "Data", "width": 120},
-            {"label": _("Training cost / month"), "fieldname": "training_cost", "fieldtype": "Data", "width": 150},
-            {"label": _("Penalty"), "fieldname": "penalty", "fieldtype": "Data", "width": 120},
-            {"label": _("EOS"), "fieldname": "eos", "fieldtype": "Data", "width": 120},
-            {"label": _("Yearly Bonus / Month"), "fieldname": "yearly_bonus", "fieldtype": "Data", "width": 150},
-            {"label": _("WHT"), "fieldname": "wht", "fieldtype": "Data", "width": 120},
-            {"label": _("Total"), "fieldname": "total", "fieldtype": "Data", "width": 150}
+            {"label": _("Ticket"), "fieldname": "ticket", "fieldtype": "Float", "precision": 2, "width": 120},
+            {"label": _("Iqama Cost / Month"), "fieldname": "iqama_cost", "fieldtype": "Float", "precision": 2, "width": 150},
+            {"label": _("VISA"), "fieldname": "visa", "fieldtype": "Float", "precision": 2, "width": 120},
+            {"label": _("Training cost / month"), "fieldname": "training_cost", "fieldtype": "Float", "precision": 2, "width": 150},
+            {"label": _("Penalty"), "fieldname": "penalty", "fieldtype": "Float", "precision": 2, "width": 120},
+            {"label": _("EOS"), "fieldname": "eos", "fieldtype": "Float", "precision": 2, "width": 120},
+            {"label": _("Yearly Bonus / Month"), "fieldname": "yearly_bonus", "fieldtype": "Float", "precision": 2, "width": 150},
+            {"label": _("WHT"), "fieldname": "wht", "fieldtype": "Float", "precision": 2, "width": 120},
+            {"label": _("Total"), "fieldname": "total", "fieldtype": "Float", "precision": 2, "width": 150}
         ]
     elif filters.get("company") == "iValueUAE":
         columns = [
@@ -79,22 +79,22 @@ def get_columns(filters):
             {"label": _("Designation"), "fieldname": "designation", "fieldtype": "Link", "options": "Designation", "width": 150},
             {"label": _("Level"), "fieldname": "level", "fieldtype": "Data", "width": 100},
             {"label": _("Company"), "fieldname": "company", "fieldtype": "Link", "options": "Company", "width": 150},
-            {"label": _("Gross Pay"), "fieldname": "gross_pay", "fieldtype": "Float", "width": 120},
+            {"label": _("Gross Pay"), "fieldname": "gross_pay", "fieldtype": "Float", "precision": 2, "width": 120},
             {"label": _("Nationality"), "fieldname": "nationality", "fieldtype": "Data", "width": 100},
             
-            {"label": _("Increment"), "fieldname": "increment", "fieldtype": "Data", "width": 120},
+            {"label": _("Increment"), "fieldname": "increment", "fieldtype": "Float", "precision": 2, "width": 120},
             {"label": _("Promotion"), "fieldname": "promotion", "fieldtype": "Data", "width": 120},
-            {"label": _("Medical Insurance / Month"), "fieldname": "medical_insurance", "fieldtype": "Float", "width": 150},
+            {"label": _("Medical Insurance / Month"), "fieldname": "medical_insurance", "fieldtype": "Float", "precision": 2, "width": 150},
             {"label": _("No of Family"), "fieldname": "no_of_family", "fieldtype": "Int", "width": 100},
-            {"label": _("Ticket"), "fieldname": "ticket", "fieldtype": "Float", "width": 120},
-            {"label": _("Iqama Cost / Month"), "fieldname": "iqama_cost", "fieldtype": "Data", "width": 150},
-            {"label": _("VISA"), "fieldname": "visa", "fieldtype": "Data", "width": 120},
-            {"label": _("Training cost / month"), "fieldname": "training_cost", "fieldtype": "Data", "width": 150},
-            {"label": _("Penalty"), "fieldname": "penalty", "fieldtype": "Data", "width": 120},
-            {"label": _("EOS"), "fieldname": "eos", "fieldtype": "Data", "width": 120},
-            {"label": _("Yearly Bonus / Month"), "fieldname": "yearly_bonus", "fieldtype": "Data", "width": 150},
-            {"label": _("WHT"), "fieldname": "wht", "fieldtype": "Data", "width": 120},
-            {"label": _("Total"), "fieldname": "total", "fieldtype": "Data", "width": 150}
+            {"label": _("Ticket"), "fieldname": "ticket", "fieldtype": "Float", "precision": 2, "width": 120},
+            {"label": _("Iqama Cost / Month"), "fieldname": "iqama_cost", "fieldtype": "Float", "precision": 2, "width": 150},
+            {"label": _("VISA"), "fieldname": "visa", "fieldtype": "Float", "precision": 2, "width": 120},
+            {"label": _("Training cost / month"), "fieldname": "training_cost", "fieldtype": "Float", "precision": 2, "width": 150},
+            {"label": _("Penalty"), "fieldname": "penalty", "fieldtype": "Float", "precision": 2, "width": 120},
+            {"label": _("EOS"), "fieldname": "eos", "fieldtype": "Float", "precision": 2, "width": 120},
+            {"label": _("Yearly Bonus / Month"), "fieldname": "yearly_bonus", "fieldtype": "Float", "precision": 2, "width": 150},
+            {"label": _("WHT"), "fieldname": "wht", "fieldtype": "Float", "precision": 2, "width": 120},
+            {"label": _("Total"), "fieldname": "total", "fieldtype": "Float", "precision": 2, "width": 150}
         ]
     
     return columns
@@ -216,8 +216,8 @@ def get_employee_budget_data(emp, filters):
         row['iqama_cost'] = (yearly_iqama / 12)
         row['visa'] = (yearly_visa / 12)
         row['training_cost'] = (traning_cost / 12)
-        row['Penalty'] = (penalty / 12)
-        row['EOS'] = (eos / 12)
+        row['penalty'] = (penalty / 12)
+        row['eos'] = (eos / 12)
         row['yearly_bonus'] = (yearly_bonus / 12)
 
 
