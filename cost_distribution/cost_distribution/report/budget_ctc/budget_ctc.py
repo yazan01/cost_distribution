@@ -183,7 +183,7 @@ def get_employee_budget_data(emp, filters):
             'employee_name': emp.employee_name,
             'department': emp.department,
             'designation': emp.designation,
-            'level': f"{bench['p_level']}",,
+            'level': f"{bench['p_level']}",
             'company': emp.company,
             'custom_supporting_services__consultant': emp.unit,
             'projects': bench['project_name'],
