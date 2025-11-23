@@ -183,7 +183,7 @@ def get_employee_budget_data(emp, filters):
             'employee_name': emp.employee_name,
             'department': emp.department,
             'designation': emp.designation,
-            'level': emp.custom_linked_level,
+            'level': f"{bench['p_level']}",,
             'company': emp.company,
             'custom_supporting_services__consultant': emp.unit,
             'projects': bench['project_name'],
@@ -249,7 +249,8 @@ def get_employee_alocations(employee, company, employee_level):
 
         # تحديد المستوى بناءً على الشركة
         if company != "iValue KSA":
-            if employee_level == "Partner" and employee not in ['HR-EMP-00052', 'HR-EMP-00169']:
+            # if employee_level == "Partner" and employee not in ['HR-EMP-00052', 'HR-EMP-00169']:
+            if employee_level == "Partner":
                 level = f"{employee_level}"
             else:
                 level = f"{employee_level}-R"
@@ -488,6 +489,18 @@ def get_bench_periods(employee, company, employee_level, unit):
         ORDER BY
             start_date
     """, (employee), as_dict=1)
+
+
+    if company != "iValue KSA":
+        # if employee_level == "Partner" and employee not in ['HR-EMP-00052', 'HR-EMP-00169']:
+        if employee_level == "Partner":
+            level = f"{employee_level}"
+        else:
+            level = f"{employee_level}-R"
+        # level = f"{employee_level}-R"
+    else:
+        level = f"{employee_level}"
+
     
     # الحصول على CTC الافتراضي
     company_ctc = frappe.db.sql("""
@@ -499,7 +512,7 @@ def get_bench_periods(employee, company, employee_level, unit):
             project IS NULL
             AND year = '2025'
             AND parent = %s
-    """, (employee_level), as_dict=1)
+    """, (level), as_dict=1)
     
     ctc_value = company_ctc[0].ctc if company_ctc else 0
     billing_value = company_ctc[0].billing if company_ctc else 0
@@ -517,18 +530,27 @@ def get_bench_periods(employee, company, employee_level, unit):
             year_end
         )
 
-        billing_costs = calculate_monthly_billing(
-            billing_value, 
-            100, 
-            year_start,
-            year_end
-        )
+        if employee_level == "Partner":
+            billing_costs = calculate_monthly_billing(
+                billing_value, 
+                60, 
+                year_start,
+                year_end
+            )
+        else: 
+            billing_costs = calculate_monthly_billing(
+                billing_value, 
+                100, 
+                year_start,
+                year_end
+            )
 
         
         bench_rows.append({
             'project': 'Bench' if unit == 'Consultant' else 'Overhead',
             'project_name': 'Bench' if unit == 'Consultant' else 'Overhead',
             'allocation_percentage': 100,
+            'p_level' : level,
             'end_date': year_end,
             **monthly_costs,
             **billing_costs
@@ -547,18 +569,27 @@ def get_bench_periods(employee, company, employee_level, unit):
             first_allocation_start - timedelta(days=1)
         )
 
-        billing_costs = calculate_monthly_billing(
-            billing_value, 
-            100, 
-            year_start,
-            first_allocation_start - timedelta(days=1)
-        )
+        if employee_level == "Partner":
+            billing_costs = calculate_monthly_billing(
+                billing_value, 
+                60, 
+                year_start,
+                first_allocation_start - timedelta(days=1)
+            )
+        else:
+            billing_costs = calculate_monthly_billing(
+                billing_value, 
+                100, 
+                year_start,
+                first_allocation_start - timedelta(days=1)
+            )
 
         
         bench_rows.append({
             'project': 'Bench' if unit == 'Consultant' else 'Overhead',
             'project_name': 'Bench' if unit == 'Consultant' else 'Overhead',
             'allocation_percentage': 100,
+            'p_level' : level,
             'end_date': first_allocation_start - timedelta(days=1),
             **monthly_costs,
             **billing_costs
@@ -580,17 +611,26 @@ def get_bench_periods(employee, company, employee_level, unit):
                 min(gap_end, year_end)
             )
             
-            billing_costs = calculate_monthly_billing(
-                billing_value, 
-                100, 
-                gap_start,
-                min(gap_end, year_end)
-            )
+            if employee_level == "Partner":
+                billing_costs = calculate_monthly_billing(
+                    billing_value, 
+                    60, 
+                    gap_start,
+                    min(gap_end, year_end)
+                )
+            else:
+                billing_costs = calculate_monthly_billing(
+                    billing_value, 
+                    100, 
+                    gap_start,
+                    min(gap_end, year_end)
+                )
 
             bench_rows.append({
                 'project': 'Bench' if unit == 'Consultant' else 'Overhead',
                 'project_name': 'Bench' if unit == 'Consultant' else 'Overhead',
                 'allocation_percentage': 100,
+                'p_level' : level,
                 'end_date': min(gap_end, year_end),
                 **monthly_costs,
                 **billing_costs
@@ -607,17 +647,26 @@ def get_bench_periods(employee, company, employee_level, unit):
             year_end
         )
 
-        billing_costs = calculate_monthly_billing(
-            billing_value, 
-            100, 
-            last_allocation_end + timedelta(days=1),
-            year_end
-        )
+        if employee_level == "Partner":
+            billing_costs = calculate_monthly_billing(
+                billing_value, 
+                60, 
+                last_allocation_end + timedelta(days=1),
+                year_end
+            )
+        else:
+            billing_costs = calculate_monthly_billing(
+                billing_value, 
+                100, 
+                last_allocation_end + timedelta(days=1),
+                year_end
+            )
         
         bench_rows.append({
             'project': 'Bench' if unit == 'Consultant' else 'Overhead',
             'project_name': 'Bench' if unit == 'Consultant' else 'Overhead',
             'allocation_percentage': 100,
+            'p_level' : level,
             'end_date': year_end,
             **monthly_costs,
             **billing_costs
