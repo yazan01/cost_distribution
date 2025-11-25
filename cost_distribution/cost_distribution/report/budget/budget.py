@@ -216,7 +216,8 @@ def get_employee_budget_data(emp, filters):
         row['iqama_cost'] = (yearly_iqama / 12)
         row['visa'] = (yearly_visa / 12)
         row['training_cost'] = (traning_cost / 12)
-        row['penalty'] = (penalty / 12)
+        # row['penalty'] = (penalty / 12)
+        row['penalty'] = (emp.gross_pay * (2 / 100))
         row['eos'] = (eos / 12)
         row['yearly_bonus'] = (yearly_bonus / 12)
 
