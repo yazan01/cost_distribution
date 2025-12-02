@@ -514,8 +514,24 @@ def get_bench_periods(employee, company, employee_level, unit):
             AND parent = %s
     """, (level), as_dict=1)
     
-    ctc_value = company_ctc[0].ctc if company_ctc else 0
-    billing_value = company_ctc[0].billing if company_ctc else 0
+    if company_ctc:
+        ctc_value = company_ctc[0].ctc if company_ctc else 0
+        billing_value = company_ctc[0].billing if company_ctc else 0
+    else:
+        level = f"{employee_level}"
+        company_ctc_1 = frappe.db.sql("""
+            SELECT 
+                ctc, billing
+            FROM 
+                `tabLevel Rate`
+            WHERE 
+                project IS NULL
+                AND year = '2025'
+                AND parent = %s
+        """, (level), as_dict=1)
+
+        ctc_value = company_ctc_1[0].ctc if company_ctc_1 else 0
+        billing_value = company_ctc_1[0].billing if company_ctc_1 else 0
     
     bench_rows = []
     year_start = date(2026, 1, 1)
