@@ -56,6 +56,12 @@ def execute(filters=None):
             set(accessible_projects_list) - set(accessible_projects_list_exp)
         )
     
+    if not accessible_projects_list_notexp:
+        accessible_projects_list_notexp = ['__DUMMY_PROJECT_NEVER_EXISTS__']
+    
+    if not accessible_projects_list_exp:
+        accessible_projects_list_exp = ['__DUMMY_PROJECT_NEVER_EXISTS__']
+    
     select_partner = filters.get("partner")
     if not select_partner:
         # If no partner is selected, get all employees and assign to select_partner
