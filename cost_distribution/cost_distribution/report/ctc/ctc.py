@@ -36,8 +36,25 @@ def execute(filters=None):
     selected_projects = filters.get("project")
     if not selected_projects:
         accessible_projects_list = accessible_projects_list_1
+
+        #update
+        accessible_projects_exp = frappe.db.sql("SELECT name FROM `tabProject Accounts For CTC`", as_list=True)
+        accessible_projects_list_exp = [project[0] for project in accessible_projects_exp]
+
+        accessible_projects_list_notexp = list(
+            set(accessible_projects_list) - set(accessible_projects_list_exp)
+        )
+
     else:
         accessible_projects_list = selected_projects
+
+        #update
+        accessible_projects_exp = frappe.db.sql("SELECT name FROM `tabProject Accounts For CTC`", as_list=True)
+        accessible_projects_list_exp = [project[0] for project in accessible_projects_exp]
+
+        accessible_projects_list_notexp = list(
+            set(accessible_projects_list) - set(accessible_projects_list_exp)
+        )
     
     select_partner = filters.get("partner")
     if not select_partner:
@@ -141,15 +158,70 @@ def execute(filters=None):
             afc.type = 'Indirect'
             AND gl.docstatus = 1
             AND gl.is_cancelled = 0
-            AND gl.project IN %(accessible_projects)s
+            AND gl.project IN %(accessible_projects_notexp)s
             AND gl.posting_date BETWEEN %(from_date)s AND %(to_date)s
 			AND pro.project_manager IN %(manager)s
 			AND pro.project_type IN %(type)s
             AND gl.remarks NOT REGEXP "Cost Distribution POP" AND gl.remarks NOT REGEXP "CAPITALIZATION"
         GROUP BY
-            afc.account, gl.project;
+            afc.account, gl.project
+
+
+        UNION ALL
+
+        SELECT
+            avyc.account_for_ctc AS 'Account',
+            NULL AS 'Posting Date',
+            gl.project AS 'Project',
+            pro.project_name AS 'Project Name',
+            gl.cost_center AS 'Cost Center',
+            NULL AS 'Employee',
+            NULL AS 'Employee Name',
+            NULL AS 'Employee Type',
+            NULL AS 'Designation',
+            NULL AS 'Level',
+            NULL AS 'Status',
+            NULL AS 'Level CTC',
+            NULL AS 'Total Hours',
+            NULL AS 'Hours Rate',
+            NULL AS 'Hours',
+            (SUM(gl.debit) - SUM(gl.credit)) * afc.currency AS 'Total',
+            pro.project_type AS 'Project Type',
+            pro.project_manager AS 'Manager',
+            pro.project_manager_name AS 'Manager Name',
+            NULL AS 'CTC'
+        FROM
+            `tabAccount VS Year CTC` AS avyc
+        JOIN
+            `tabAccounts For CTC` AS afc
+        ON
+            avyc.account_for_ctc = afc.account
+        JOIN
+            `tabGL Entry` AS gl
+        ON
+            gl.account = afc.account
+        JOIN
+            `tabProject` AS pro
+        ON
+            gl.project = pro.name
+        WHERE
+            afc.type = 'Indirect'
+            AND gl.docstatus = 1
+            AND gl.is_cancelled = 0
+            AND YEAR(gl.posting_date) = avyc.year
+            AND gl.posting_date BETWEEN %(from_date)s AND %(to_date)s
+            AND gl.project IN %(accessible_projects_exp)s
+            AND pro.project_manager IN %(manager)s
+            AND pro.project_type IN %(type)s
+            AND gl.remarks NOT REGEXP "Cost Distribution POP" AND gl.remarks NOT REGEXP "CAPITALIZATION"
+        GROUP BY
+            avyc.account_for_ctc, gl.project
+
+
     """, {
         "accessible_projects": accessible_projects_list,
+        "accessible_projects_exp": accessible_projects_list_exp,
+        "accessible_projects_notexp": accessible_projects_list_notexp,
         "from_date": filters.get("from_date"),
         "to_date": filters.get("to_date"),
 		"manager": select_partner,
