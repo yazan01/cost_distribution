@@ -36,11 +36,22 @@ frappe.query_reports["General Ledger Without Distribution"] = {
 			label: __("Account"),
 			fieldtype: "MultiSelectList",
 			options: "Account",
+			// get_data: function (txt) {
+			// 	return frappe.db.get_link_options("Account", txt, {
+			// 		company: frappe.query_report.get_filter_value("company"),
+			// 	});
+			// },
 			get_data: function (txt) {
-				return frappe.db.get_link_options("Account", txt, {
-					company: frappe.query_report.get_filter_value("company"),
-				});
-			},
+				var company = frappe.query_report.get_filter_value("company");
+				if (company) {
+					return frappe.db.get_link_options("Account", txt, {
+						company: company,
+					});
+				} else {
+					// إذا لم يتم تحديد شركة، اعرض جميع الحسابات
+					return frappe.db.get_link_options("Account", txt);
+				}
+			}
 		},
 		{
 			fieldname: "voucher_no",
@@ -150,11 +161,22 @@ frappe.query_reports["General Ledger Without Distribution"] = {
 			fieldname: "cost_center",
 			label: __("Cost Center"),
 			fieldtype: "MultiSelectList",
+			// get_data: function (txt) {
+			// 	return frappe.db.get_link_options("Cost Center", txt, {
+			// 		company: frappe.query_report.get_filter_value("company"),
+			// 	});
+			// },
 			get_data: function (txt) {
-				return frappe.db.get_link_options("Cost Center", txt, {
-					company: frappe.query_report.get_filter_value("company"),
-				});
-			},
+				var company = frappe.query_report.get_filter_value("company");
+				if (company) {
+					return frappe.db.get_link_options("Cost Center", txt, {
+						company: company,
+					});
+				} else {
+					// إذا لم يتم تحديد شركة، اعرض جميع مراكز التكلفة
+					return frappe.db.get_link_options("Cost Center", txt);
+				}
+			}
 		},
 		{
 			fieldname: "project",
