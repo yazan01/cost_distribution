@@ -612,6 +612,7 @@ def get_result_as_list(data, filters):
 
 		balance = get_balance(d, balance, "debit", "credit")
 		d["balance"] = balance
+		d["financial_balance"] = balance * 1
 
 		d["account_currency"] = filters.get("account_currency") or filters.get("presentation_currency")
 		d["bill_no"] = inv_details.get(d.get("against_voucher"), "")
@@ -692,6 +693,12 @@ def get_columns(filters):
 		{
 			"label": _("Balance ({0})").format(currency),
 			"fieldname": "balance",
+			"fieldtype": "Float",
+			"width": 130,
+		},
+		{
+			"label": _("Financial Balance ({0})").format(currency),
+			"fieldname": "financial_balance",
 			"fieldtype": "Float",
 			"width": 130,
 		},
