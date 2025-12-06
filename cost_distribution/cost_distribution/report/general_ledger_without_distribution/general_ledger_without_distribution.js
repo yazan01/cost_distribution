@@ -7,9 +7,7 @@ frappe.query_reports["General Ledger Without Distribution"] = {
 			fieldname: "company",
 			label: __("Company"),
 			fieldtype: "Link",
-			options: "Company",
-			default: frappe.defaults.get_user_default("Company"),
-			reqd: 1,
+			options: "Company"
 		},
 		{
 			fieldname: "finance_book",
@@ -146,6 +144,7 @@ frappe.query_reports["General Ledger Without Distribution"] = {
 			label: __("Currency"),
 			fieldtype: "Select",
 			options: erpnext.get_presentation_currency_list(),
+			reqd: 1,
 		},
 		{
 			fieldname: "cost_center",
