@@ -51,8 +51,13 @@ def execute(filters=None):
 
 
 def validate_filters(filters, account_details):
-	if not filters.get("company"):
-		frappe.throw(_("{0} is mandatory").format(_("Company")))
+	# Company is now optional
+	# if not filters.get("company"):
+	# 	frappe.throw(_("{0} is mandatory").format(_("Company")))
+
+	# Make presentation_currency mandatory when company is not selected
+	if not filters.get("company") and not filters.get("presentation_currency"):
+		frappe.throw(_("Please select either Company or Presentation Currency"))
 
 	if not filters.get("from_date") and not filters.get("to_date"):
 		frappe.throw(
@@ -95,7 +100,12 @@ def validate_party(filters):
 
 def set_account_currency(filters):
 	if filters.get("account") or (filters.get("party") and len(filters.party) == 1):
-		filters["company_currency"] = frappe.get_cached_value("Company", filters.company, "default_currency")
+		# Get company currency - if no company selected, use presentation currency
+		if filters.get("company"):
+			filters["company_currency"] = frappe.get_cached_value("Company", filters.company, "default_currency")
+		else:
+			filters["company_currency"] = filters.get("presentation_currency")
+		
 		account_currency = None
 
 		if filters.get("account"):
@@ -113,11 +123,12 @@ def set_account_currency(filters):
 					account_currency = currency
 
 		elif filters.get("party") and filters.get("party_type"):
-			gle_currency = frappe.db.get_value(
-				"GL Entry",
-				{"party_type": filters.party_type, "party": filters.party[0], "company": filters.company},
-				"account_currency",
-			)
+			# Modified to work without company filter
+			gle_filters = {"party_type": filters.party_type, "party": filters.party[0]}
+			if filters.get("company"):
+				gle_filters["company"] = filters.company
+				
+			gle_currency = frappe.db.get_value("GL Entry", gle_filters, "account_currency")
 
 			if gle_currency:
 				account_currency = gle_currency
@@ -170,7 +181,7 @@ def get_gl_entries(filters, accounting_dimensions):
 	if filters.get("group_by") == "Group by Account":
 		order_by_statement = "order by account, posting_date, creation"
 
-	if filters.get("include_default_book_entries"):
+	if filters.get("include_default_book_entries") and filters.get("company"):
 		filters["company_fb"] = frappe.get_cached_value(
 			"Company", filters.get("company"), "default_finance_book"
 		)
@@ -203,17 +214,24 @@ def get_gl_entries(filters, accounting_dimensions):
 	else:
 		ignor_str = "|".join(ignor_arr)
 
+	# Modified query to work with or without company
+	company_condition = ""
+	if filters.get("company"):
+		company_condition = "where company=%(company)s"
+	else:
+		company_condition = "where 1=1"
+
 	if filters.get("include_payroll_distribution"):
 		gl_entries = frappe.db.sql(
 			f"""
 			select
-				name as gl_entry, posting_date, account, party_type, party,
+				name as gl_entry, posting_date, account, party_type, party, company,
 				voucher_type, voucher_subtype, voucher_no, {dimension_fields}
 				cost_center, project, {transaction_currency_fields}
 				against_voucher_type, against_voucher, account_currency,
 				against, is_opening, creation {select_fields}
 			from `tabGL Entry`
-			where company=%(company)s {get_conditions(filters)}
+			{company_condition} {get_conditions(filters)}
 			{order_by_statement}
 		""",
 			filters,
@@ -223,13 +241,13 @@ def get_gl_entries(filters, accounting_dimensions):
 		gl_entries = frappe.db.sql(
 			f"""
 			select
-				name as gl_entry, posting_date, account, party_type, party,
+				name as gl_entry, posting_date, account, party_type, party, company,
 				voucher_type, voucher_subtype, voucher_no, {dimension_fields}
 				cost_center, project, {transaction_currency_fields}
 				against_voucher_type, against_voucher, account_currency,
 				against, is_opening, creation {select_fields}
 			from `tabGL Entry`
-			where company=%(company)s AND remarks NOT REGEXP "Cost Distribution" {get_conditions(filters)}
+			{company_condition} AND remarks NOT REGEXP "Cost Distribution" {get_conditions(filters)}
 			{order_by_statement}
 		""",
 			filters,
@@ -262,29 +280,28 @@ def get_conditions(filters):
 		conditions.append("against_voucher=%(against_voucher_no)s")
 
 	if filters.get("ignore_err"):
-		err_journals = frappe.db.get_all(
-			"Journal Entry",
-			filters={
-				"company": filters.get("company"),
-				"docstatus": 1,
-				"voucher_type": ("in", ["Exchange Rate Revaluation", "Exchange Gain Or Loss"]),
-			},
-			as_list=True,
-		)
+		# Modified to work without company filter
+		err_filters = {"docstatus": 1, "voucher_type": ("in", ["Exchange Rate Revaluation", "Exchange Gain Or Loss"])}
+		if filters.get("company"):
+			err_filters["company"] = filters.get("company")
+			
+		err_journals = frappe.db.get_all("Journal Entry", filters=err_filters, as_list=True)
+		
 		if err_journals:
 			filters.update({"voucher_no_not_in": [x[0] for x in err_journals]})
 
 	if filters.get("ignore_cr_dr_notes"):
-		system_generated_cr_dr_journals = frappe.db.get_all(
-			"Journal Entry",
-			filters={
-				"company": filters.get("company"),
-				"docstatus": 1,
-				"voucher_type": ("in", ["Credit Note", "Debit Note"]),
-				"is_system_generated": 1,
-			},
-			as_list=True,
-		)
+		# Modified to work without company filter
+		cr_dr_filters = {
+			"docstatus": 1,
+			"voucher_type": ("in", ["Credit Note", "Debit Note"]),
+			"is_system_generated": 1,
+		}
+		if filters.get("company"):
+			cr_dr_filters["company"] = filters.get("company")
+			
+		system_generated_cr_dr_journals = frappe.db.get_all("Journal Entry", filters=cr_dr_filters, as_list=True)
+		
 		if system_generated_cr_dr_journals:
 			vouchers_to_ignore = (filters.get("voucher_no_not_in") or []) + [
 				x[0] for x in system_generated_cr_dr_journals
@@ -317,7 +334,7 @@ def get_conditions(filters):
 
 	if filters.get("include_default_book_entries"):
 		if filters.get("finance_book"):
-			if filters.get("company_fb") and cstr(filters.get("finance_book")) != cstr(
+			if filters.get("company") and filters.get("company_fb") and cstr(filters.get("finance_book")) != cstr(
 				filters.get("company_fb")
 			):
 				frappe.throw(
@@ -326,7 +343,10 @@ def get_conditions(filters):
 			else:
 				conditions.append("(finance_book in (%(finance_book)s, '') OR finance_book IS NULL)")
 		else:
-			conditions.append("(finance_book in (%(company_fb)s, '') OR finance_book IS NULL)")
+			if filters.get("company_fb"):
+				conditions.append("(finance_book in (%(company_fb)s, '') OR finance_book IS NULL)")
+			else:
+				conditions.append("(finance_book in ('') OR finance_book IS NULL)")
 	else:
 		if filters.get("finance_book"):
 			conditions.append("(finance_book in (%(finance_book)s, '') OR finance_book IS NULL)")
@@ -469,7 +489,17 @@ def get_accountwise_gle(filters, accounting_dimensions, gl_entries, gle_map, tot
 	group_by_voucher_consolidated = filters.get("group_by") == "Group by Voucher (Consolidated)"
 
 	if filters.get("show_net_values_in_party_account"):
-		account_type_map = get_account_type_map(filters.get("company"))
+		# Modified to handle multiple companies
+		account_type_map = {}
+		if filters.get("company"):
+			account_type_map = get_account_type_map(filters.get("company"))
+		else:
+			# Get all accounts from all companies
+			all_accounts = frappe.db.sql("""
+				SELECT name, account_type 
+				FROM `tabAccount`
+			""", as_dict=1)
+			account_type_map = {acc.name: acc.account_type for acc in all_accounts}
 
 	immutable_ledger = frappe.db.get_single_value("Accounts Settings", "enable_immutable_ledger")
 
@@ -583,7 +613,7 @@ def get_result_as_list(data, filters):
 		balance = get_balance(d, balance, "debit", "credit")
 		d["balance"] = balance
 
-		d["account_currency"] = filters.account_currency
+		d["account_currency"] = filters.get("account_currency") or filters.get("presentation_currency")
 		d["bill_no"] = inv_details.get(d.get("against_voucher"), "")
 
 	return data
@@ -614,8 +644,9 @@ def get_columns(filters):
 		if filters.get("company"):
 			currency = get_company_currency(filters["company"])
 		else:
+			# Default to a common currency or user's default
 			company = get_default_company()
-			currency = get_company_currency(company)
+			currency = get_company_currency(company) if company else "USD"
 
 	columns = [
 		{
@@ -633,6 +664,19 @@ def get_columns(filters):
 			"options": "Account",
 			"width": 180,
 		},
+	]
+
+	# Add Company column when showing multiple companies
+	if not filters.get("company"):
+		columns.append({
+			"label": _("Company"),
+			"fieldname": "company",
+			"fieldtype": "Link",
+			"options": "Company",
+			"width": 120,
+		})
+
+	columns += [
 		{
 			"label": _("Debit ({0})").format(currency),
 			"fieldname": "debit",
