@@ -155,6 +155,7 @@ frappe.query_reports["General Ledger Without Distribution"] = {
 			label: __("Currency"),
 			fieldtype: "Select",
 			options: erpnext.get_presentation_currency_list(),
+			default: "SAR",
 			reqd: 1,
 		},
 		{
