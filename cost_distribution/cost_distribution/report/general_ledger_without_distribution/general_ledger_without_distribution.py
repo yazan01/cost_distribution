@@ -1,6 +1,12 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
 
+# Modified to support multi-company reporting with currency conversion
+# - When no specific company is selected, the report can show multiple companies
+# - Each company's amounts are converted to the selected presentation currency
+# - Conversion uses exchange rates from Currency Exchange doctype
+# - Original amounts are preserved in debit_in_account_currency and credit_in_account_currency fields
+
 
 import copy
 from collections import OrderedDict
@@ -18,6 +24,51 @@ from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import (
 from erpnext.accounts.report.financial_statements import get_cost_centers_with_children
 from erpnext.accounts.report.utils import convert_to_presentation_currency, get_currency
 from erpnext.accounts.utils import get_account_currency
+
+
+def get_exchange_rate(from_currency, to_currency, transaction_date):
+	"""
+	Get exchange rate from one currency to another
+	"""
+	if from_currency == to_currency:
+		return 1.0
+	
+	# Try to get the exchange rate from Currency Exchange doctype
+	exchange_rate = frappe.db.get_value(
+		"Currency Exchange",
+		{
+			"from_currency": from_currency,
+			"to_currency": to_currency,
+			"for_buying": 1
+		},
+		"exchange_rate",
+		order_by="date desc"
+	)
+	
+	if not exchange_rate:
+		# Try reverse rate
+		reverse_rate = frappe.db.get_value(
+			"Currency Exchange",
+			{
+				"from_currency": to_currency,
+				"to_currency": from_currency,
+				"for_buying": 1
+			},
+			"exchange_rate",
+			order_by="date desc"
+		)
+		if reverse_rate:
+			exchange_rate = 1.0 / reverse_rate
+	
+	if not exchange_rate:
+		frappe.throw(
+			_("Exchange rate not found for {0} to {1}. Please add it in Currency Exchange.").format(
+				from_currency, to_currency
+			)
+		)
+	
+	return exchange_rate
+
 
 
 
@@ -256,7 +307,46 @@ def get_gl_entries(filters, accounting_dimensions):
 		
 
 	if filters.get("presentation_currency"):
-		return convert_to_presentation_currency(gl_entries, currency_map)
+		# Get exchange rates for each company when showing multiple companies
+		if not filters.get("company"):
+			# Get all unique companies from GL entries
+			companies = set(entry.get("company") for entry in gl_entries if entry.get("company"))
+			exchange_rates = {}
+			
+			for company in companies:
+				company_currency = frappe.get_cached_value("Company", company, "default_currency")
+				
+				# Get exchange rate from company currency to presentation currency
+				if company_currency != filters.get("presentation_currency"):
+					exchange_rate = get_exchange_rate(
+						company_currency, 
+						filters.get("presentation_currency"),
+						filters.get("to_date")
+					)
+					exchange_rates[company] = exchange_rate
+				else:
+					exchange_rates[company] = 1.0
+			
+			# Convert amounts for each GL entry based on its company
+			for entry in gl_entries:
+				company = entry.get("company")
+				if company and company in exchange_rates:
+					rate = exchange_rates[company]
+					
+					# Store original values in account currency fields
+					entry["debit_in_account_currency"] = entry.get("debit", 0)
+					entry["credit_in_account_currency"] = entry.get("credit", 0)
+					
+					# Convert debit and credit to presentation currency
+					if entry.get("debit"):
+						entry["debit"] = entry["debit"] * rate
+					if entry.get("credit"):
+						entry["credit"] = entry["credit"] * rate
+			
+			return gl_entries
+		else:
+			# Single company - use existing conversion method
+			return convert_to_presentation_currency(gl_entries, currency_map)
 	else:
 		return gl_entries
 
