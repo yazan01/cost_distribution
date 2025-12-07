@@ -336,7 +336,7 @@ def get_gl_entries(filters, accounting_dimensions):
 				against_voucher_type, against_voucher, account_currency,
 				against, is_opening, creation {select_fields}
 			from `tabGL Entry`
-			{company_condition} AND remarks NOT REGEXP "Cost Distribution POP" {get_conditions(filters)}
+			{company_condition} AND remarks NOT REGEXP "Cost Distribution POP" AND ((remarks NOT REGEXP "WIP-2024" AND company = "iValueUAE") OR (remarks NOT REGEXP "WIP 2024" AND company = "iValueJOR") OR (remarks NOT REGEXP "-WIP" AND company = "iValue KSA")) {get_conditions(filters)}
 			{order_by_statement}
 		""",
 			filters,
