@@ -152,12 +152,101 @@ def get_result(filters, account_details):
 		accounting_dimensions = get_accounting_dimensions()
 
 	gl_entries = get_gl_entries(filters, accounting_dimensions)
+	
+	# تحويل جميع القيود إلى SAR
+	gl_entries = convert_all_to_sar(gl_entries, filters)
 
 	data = get_data_with_opening_closing(filters, account_details, accounting_dimensions, gl_entries)
 
 	result = get_result_as_list(data, filters)
 
 	return result
+
+
+def convert_all_to_sar(gl_entries, filters):
+	"""
+	تحويل جميع المبالغ في القيود إلى الريال السعودي (SAR)
+	"""
+	# إذا تم تحديد presentation_currency وهي SAR، استخدمها
+	# وإلا استخدم SAR كافتراضي
+	target_currency = filters.get("presentation_currency") or "SAR"
+	
+	# إذا كانت العملة المستهدفة هي SAR بالفعل، نحول كل شيء إليها
+	if target_currency == "SAR":
+		for gle in gl_entries:
+			company = gle.get("company")
+			posting_date = gle.get("posting_date")
+			account_currency = gle.get("account_currency")
+			
+			# إذا كانت العملة ليست SAR، نقوم بالتحويل
+			if account_currency and account_currency != target_currency:
+				# الحصول على سعر الصرف
+				exchange_rate = get_exchange_rate(account_currency, target_currency, posting_date, company)
+				
+				# تحويل المبالغ
+				if gle.get("debit"):
+					gle["debit"] = gle["debit"] * exchange_rate
+				if gle.get("credit"):
+					gle["credit"] = gle["credit"] * exchange_rate
+				if gle.get("debit_in_account_currency"):
+					gle["debit_in_account_currency"] = gle["debit_in_account_currency"] * exchange_rate
+				if gle.get("credit_in_account_currency"):
+					gle["credit_in_account_currency"] = gle["credit_in_account_currency"] * exchange_rate
+				
+				# تحديث عملة الحساب
+				gle["account_currency"] = target_currency
+	
+	return gl_entries
+
+
+def get_exchange_rate(from_currency, to_currency, date, company=None):
+	"""
+	الحصول على سعر الصرف بين عملتين في تاريخ محدد
+	"""
+	if from_currency == to_currency:
+		return 1.0
+	
+	try:
+		# محاولة الحصول على سعر الصرف من جدول Currency Exchange
+		exchange_rate = frappe.db.get_value(
+			"Currency Exchange",
+			{
+				"from_currency": from_currency,
+				"to_currency": to_currency,
+				"date": ("<=", date)
+			},
+			"exchange_rate",
+			order_by="date desc"
+		)
+		
+		if exchange_rate:
+			return float(exchange_rate)
+		
+		# إذا لم يوجد، محاولة العكس (to -> from) واستخدام المقلوب
+		reverse_rate = frappe.db.get_value(
+			"Currency Exchange",
+			{
+				"from_currency": to_currency,
+				"to_currency": from_currency,
+				"date": ("<=", date)
+			},
+			"exchange_rate",
+			order_by="date desc"
+		)
+		
+		if reverse_rate:
+			return 1.0 / float(reverse_rate)
+		
+		# إذا لم يوجد أي سعر صرف، استخدام 1 (أو يمكن رفع خطأ)
+		frappe.msgprint(
+			f"No exchange rate found for {from_currency} to {to_currency} on {date}. Using rate 1.0",
+			alert=True
+		)
+		return 1.0
+		
+	except Exception as e:
+		frappe.log_error(f"Error getting exchange rate: {str(e)}")
+		return 1.0
 
 
 def get_gl_entries(filters, accounting_dimensions):
@@ -612,7 +701,7 @@ def get_result_as_list(data, filters):
 
 		balance = get_balance(d, balance, "debit", "credit")
 		d["balance"] = balance
-		d["financial_balance"] = balance * 1
+		d["financial_balance"] = balance * 2
 
 		d["account_currency"] = filters.get("account_currency") or filters.get("presentation_currency")
 		d["bill_no"] = inv_details.get(d.get("against_voucher"), "")
@@ -639,15 +728,8 @@ def get_balance(row, balance, debit_field, credit_field):
 
 
 def get_columns(filters):
-	if filters.get("presentation_currency"):
-		currency = filters["presentation_currency"]
-	else:
-		if filters.get("company"):
-			currency = get_company_currency(filters["company"])
-		else:
-			# Default to a common currency or user's default
-			company = get_default_company()
-			currency = get_company_currency(company) if company else "USD"
+	# العملة دائماً SAR لأن جميع المبالغ يتم تحويلها إلى الريال السعودي
+	currency = "SAR"
 
 	columns = [
 		{
