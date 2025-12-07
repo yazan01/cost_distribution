@@ -546,10 +546,45 @@ def get_bench_periods(employee, company, employee_level, unit):
             year_end
         )
 
-        if employee_level == "Partner":
+        if employee_level in ["Partner", "S. Partner", "S. Director", "S. Director-R"]:
             billing_costs = calculate_monthly_billing(
                 billing_value, 
                 60, 
+                year_start,
+                year_end
+            )
+        elif employee_level in ["Director", "Director-R"]:
+            billing_costs = calculate_monthly_billing(
+                billing_value, 
+                70, 
+                year_start,
+                year_end
+            )
+        elif employee_level in ["S. Manager", "S. Manager-R"]:
+            billing_costs = calculate_monthly_billing(
+                billing_value, 
+                75, 
+                year_start,
+                year_end
+            )
+        elif employee_level in ["Manager", "Manager-R", "A. Manager", "A. Manager-R"]:
+            billing_costs = calculate_monthly_billing(
+                billing_value, 
+                80, 
+                year_start,
+                year_end
+            )
+        elif employee_level in ["S. Consultant", "S. Consultant-R", "Consultant", "Consultant-R"]:
+            billing_costs = calculate_monthly_billing(
+                billing_value, 
+                85, 
+                year_start,
+                year_end
+            )
+        elif employee_level in ["A. Consultant", "A. Consultant-R"]:
+            billing_costs = calculate_monthly_billing(
+                billing_value, 
+                90, 
                 year_start,
                 year_end
             )
@@ -585,12 +620,47 @@ def get_bench_periods(employee, company, employee_level, unit):
             first_allocation_start - timedelta(days=1)
         )
 
-        if employee_level == "Partner":
+        if employee_level in ["Partner", "S. Partner", "S. Director", "S. Director-R"]:
             billing_costs = calculate_monthly_billing(
                 billing_value, 
                 60, 
                 year_start,
                 first_allocation_start - timedelta(days=1)
+            )
+        elif employee_level in ["Director", "Director-R"]:
+            billing_costs = calculate_monthly_billing(
+                billing_value, 
+                70, 
+                year_start,
+                year_end
+            )
+        elif employee_level in ["S. Manager", "S. Manager-R"]:
+            billing_costs = calculate_monthly_billing(
+                billing_value, 
+                75, 
+                year_start,
+                year_end
+            )
+        elif employee_level in ["Manager", "Manager-R", "A. Manager", "A. Manager-R"]:
+            billing_costs = calculate_monthly_billing(
+                billing_value, 
+                80, 
+                year_start,
+                year_end
+            )
+        elif employee_level in ["S. Consultant", "S. Consultant-R", "Consultant", "Consultant-R"]:
+            billing_costs = calculate_monthly_billing(
+                billing_value, 
+                85, 
+                year_start,
+                year_end
+            )
+        elif employee_level in ["A. Consultant", "A. Consultant-R"]:
+            billing_costs = calculate_monthly_billing(
+                billing_value, 
+                90, 
+                year_start,
+                year_end
             )
         else:
             billing_costs = calculate_monthly_billing(
