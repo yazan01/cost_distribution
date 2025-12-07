@@ -336,7 +336,7 @@ def get_gl_entries(filters, accounting_dimensions):
 				against_voucher_type, against_voucher, account_currency,
 				against, is_opening, creation {select_fields}
 			from `tabGL Entry`
-			{company_condition} AND remarks NOT REGEXP "Cost Distribution" {get_conditions(filters)}
+			{company_condition} AND remarks NOT REGEXP "Cost Distribution POP" {get_conditions(filters)}
 			{order_by_statement}
 		""",
 			filters,
@@ -701,7 +701,7 @@ def get_result_as_list(data, filters):
 
 		balance = get_balance(d, balance, "debit", "credit")
 		d["balance"] = balance
-		d["financial_balance"] = balance * 2
+		d["financial_balance"] = balance * 1
 
 		d["account_currency"] = filters.get("account_currency") or filters.get("presentation_currency")
 		d["bill_no"] = inv_details.get(d.get("against_voucher"), "")
