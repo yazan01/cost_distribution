@@ -37,21 +37,22 @@ def get_dynamic_columns(from_date, to_date):
     ]
     
     # إضافة أعمدة CTC لكل سنة
-    for year in range(from_year, to_year + 1):
+    if filters.get("show_ctc"):
+        for year in range(from_year, to_year + 1):
+            columns.append({
+                "label": f"Year {year} CTC Cost",
+                "fieldname": f"ctc_{year}",
+                "fieldtype": "Float",
+                "width": 150
+            })
+        
+        # عمود المجموع للـ CTC
         columns.append({
-            "label": f"Year {year} CTC Cost",
-            "fieldname": f"ctc_{year}",
+            "label": "Total CTC Cost",
+            "fieldname": "total_ctc",
             "fieldtype": "Float",
             "width": 150
         })
-    
-    # عمود المجموع للـ CTC
-    columns.append({
-        "label": "Total CTC Cost",
-        "fieldname": "total_ctc",
-        "fieldtype": "Float",
-        "width": 150
-    })
     
     # إضافة أعمدة Actual لكل سنة
     for year in range(from_year, to_year + 1):
