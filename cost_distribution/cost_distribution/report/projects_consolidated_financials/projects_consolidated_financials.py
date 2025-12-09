@@ -37,7 +37,8 @@ def get_dynamic_columns(from_date, to_date):
     ]
     
     # إضافة أعمدة CTC لكل سنة
-    if filters.get("show_ctc"):
+    show_ctc = filters.get("show_ctc")
+    if show_ctc:
         for year in range(from_year, to_year + 1):
             columns.append({
                 "label": f"Year {year} CTC Cost",
