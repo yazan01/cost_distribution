@@ -88,10 +88,13 @@ def get_dynamic_columns(from_date, to_date, show_ctc):
         "fieldtype": "Float",
         "width": 150
     })
+
     
+    if show_ctc:
+        columns.append({"label": "Profit AND Loss on CTC Cost", "fieldname": "profit_loss_ctc", "fieldtype": "Float", "width": 200},)
+        
     # أعمدة الربح والخسارة
-    columns.extend([
-        {"label": "Profit AND Loss on CTC Cost", "fieldname": "profit_loss_ctc", "fieldtype": "Float", "width": 200},
+    columns.extend([        
         {"label": "Profit AND Loss on Actual Cost", "fieldname": "profit_loss_actual", "fieldtype": "Float", "width": 200},
     ])
     
