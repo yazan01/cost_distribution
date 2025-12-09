@@ -34,6 +34,12 @@ frappe.query_reports["Projects Consolidated Financials"] = {
 			"default": "" 
 		},
 		{
+			"fieldname": "show_ctc",
+			"label": __("Show CTC Columns"),
+			"fieldtype": "Check",
+			"default": 1
+		},
+		{
 			"fieldname": "from_date",
 			"label": __("From Date"),
 			"fieldtype": "Date",
