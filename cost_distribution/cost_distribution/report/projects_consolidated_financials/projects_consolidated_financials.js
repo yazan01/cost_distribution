@@ -37,14 +37,12 @@ frappe.query_reports["Projects Consolidated Financials"] = {
 			"fieldname": "from_date",
 			"label": __("From Date"),
 			"fieldtype": "Date",
-			"default": frappe.datetime.add_years(frappe.datetime.get_today(), -2),
 			"reqd": 1
 		},
 		{
 			"fieldname": "to_date",
 			"label": __("To Date"),
 			"fieldtype": "Date",
-			"default": frappe.datetime.get_today(),
 			"reqd": 1
 		}
 	],
