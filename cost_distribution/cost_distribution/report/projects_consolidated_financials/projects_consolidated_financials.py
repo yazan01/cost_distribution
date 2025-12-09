@@ -1,8 +1,30 @@
 from collections import OrderedDict
 import frappe
 from frappe import _, _dict
+from datetime import datetime
 
 def execute(filters):
+    from_date = filters.get("from_date")
+    to_date = filters.get("to_date")
+    
+    if not from_date or not to_date:
+        frappe.throw(_("من فضلك اختر تاريخ البداية والنهاية"))
+    
+    # توليد الأعمدة الديناميكية بناءً على التواريخ
+    columns = get_dynamic_columns(from_date, to_date)
+    
+    # جلب البيانات
+    data = get_project_data(filters)
+    
+    return columns, data
+
+def get_dynamic_columns(from_date, to_date):
+    """توليد الأعمدة بناءً على السنوات المختارة"""
+    
+    from_year = datetime.strptime(str(from_date), "%Y-%m-%d").year
+    to_year = datetime.strptime(str(to_date), "%Y-%m-%d").year
+    
+    # الأعمدة الأساسية (ثابتة)
     columns = [
         {"label": "Project ID", "fieldname": "project_id", "fieldtype": "Link", "options": "Project", "width": 120},
         {"label": "Project Name A", "fieldname": "project_name_a", "fieldtype": "Data", "width": 250},
@@ -12,40 +34,81 @@ def execute(filters):
         {"label": "Client", "fieldname": "client", "fieldtype": "Data", "width": 250},
         {"label": "Project Manager", "fieldname": "project_manager", "fieldtype": "Link", "options": "Employee", "width": 180},
         {"label": "Project Manager Name", "fieldname": "project_manager_name", "fieldtype": "Data", "width": 200},
-
-        {"label": "Year 2023 CTC Cost", "fieldname": "ctc_2023", "fieldtype": "Float", "width": 150},
-        {"label": "Year 2024 CTC Cost", "fieldname": "ctc_2024", "fieldtype": "Float", "width": 150},
-        {"label": "Year 2025 CTC Cost", "fieldname": "ctc_2025", "fieldtype": "Float", "width": 150},
-        {"label": "Total CTC Cost", "fieldname": "total_ctc", "fieldtype": "Float", "width": 150},
-
-        {"label": "Year 2023 Actual Cost", "fieldname": "actual_2023", "fieldtype": "Float", "width": 150},
-        {"label": "Year 2024 Actual Cost", "fieldname": "actual_2024", "fieldtype": "Float", "width": 150},
-        {"label": "Year 2025 Actual Cost", "fieldname": "actual_2025", "fieldtype": "Float", "width": 150},
-        {"label": "Total Actual Cost", "fieldname": "total_actual", "fieldtype": "Float", "width": 150},
-
-        {"label": "Year 2023 Revenue", "fieldname": "revenue_2023", "fieldtype": "Float", "width": 150},
-        {"label": "Year 2024 Revenue", "fieldname": "revenue_2024", "fieldtype": "Float", "width": 150},
-        {"label": "Year 2025 Revenue", "fieldname": "revenue_2025", "fieldtype": "Float", "width": 150},
-        {"label": "Total Revenue", "fieldname": "total_revenue", "fieldtype": "Float", "width": 150},
-
+    ]
+    
+    # إضافة أعمدة CTC لكل سنة
+    for year in range(from_year, to_year + 1):
+        columns.append({
+            "label": f"Year {year} CTC Cost",
+            "fieldname": f"ctc_{year}",
+            "fieldtype": "Float",
+            "width": 150
+        })
+    
+    # عمود المجموع للـ CTC
+    columns.append({
+        "label": "Total CTC Cost",
+        "fieldname": "total_ctc",
+        "fieldtype": "Float",
+        "width": 150
+    })
+    
+    # إضافة أعمدة Actual لكل سنة
+    for year in range(from_year, to_year + 1):
+        columns.append({
+            "label": f"Year {year} Actual Cost",
+            "fieldname": f"actual_{year}",
+            "fieldtype": "Float",
+            "width": 150
+        })
+    
+    # عمود المجموع للـ Actual
+    columns.append({
+        "label": "Total Actual Cost",
+        "fieldname": "total_actual",
+        "fieldtype": "Float",
+        "width": 150
+    })
+    
+    # إضافة أعمدة Revenue لكل سنة
+    for year in range(from_year, to_year + 1):
+        columns.append({
+            "label": f"Year {year} Revenue",
+            "fieldname": f"revenue_{year}",
+            "fieldtype": "Float",
+            "width": 150
+        })
+    
+    # عمود المجموع للـ Revenue
+    columns.append({
+        "label": "Total Revenue",
+        "fieldname": "total_revenue",
+        "fieldtype": "Float",
+        "width": 150
+    })
+    
+    # أعمدة الربح والخسارة
+    columns.extend([
         {"label": "Profit AND Loss on CTC Cost", "fieldname": "profit_loss_ctc", "fieldtype": "Float", "width": 200},
         {"label": "Profit AND Loss on Actual Cost", "fieldname": "profit_loss_actual", "fieldtype": "Float", "width": 200},
-    ]
-
+    ])
     
-    data = get_project_data(filters)
-    return columns, data
+    return columns
 
 def get_project_data(filters):
     project_filter = filters.get("project")
     partner_filter = filters.get("partner")
     project_type_filter = filters.get("project_type")
-
     project_status = filters.get("status")
     customer = filters.get("customer")
+    from_date = filters.get("from_date")
+    to_date = filters.get("to_date")
     
+    from_year = datetime.strptime(str(from_date), "%Y-%m-%d").year
+    to_year = datetime.strptime(str(to_date), "%Y-%m-%d").year
+    years_list = list(range(from_year, to_year + 1))
     
-    
+    # جلب المشاريع
     projects = frappe.db.sql("""
         SELECT 
             p.name AS project_id, 
@@ -75,6 +138,7 @@ def get_project_data(filters):
     if not project_ids:
         return []
     
+    # جلب البيانات المالية
     financial_data = frappe.db.sql("""
         SELECT 
             gl.project AS project_id,
@@ -93,11 +157,20 @@ def get_project_data(filters):
         JOIN `tabProject` p ON gl.project = p.name
         WHERE 
             gl.project IN %(project_ids)s 
-            AND YEAR(gl.posting_date) IN (2023, 2024, 2025)
+            AND gl.posting_date BETWEEN %(from_date)s AND %(to_date)s
+            AND YEAR(gl.posting_date) IN %(years_list)s
             AND gl.docstatus = 1 AND gl.is_cancelled = 0 AND gl.remarks NOT REGEXP "CAPITALIZATION"
         GROUP BY gl.project, YEAR(gl.posting_date)
-    """, {"project_ids": project_ids, 'act': '5%', 'rev': '4%'}, as_dict=True)
+    """, {
+        "project_ids": project_ids, 
+        'act': '5%', 
+        'rev': '4%',
+        'from_date': from_date,
+        'to_date': to_date,
+        'years_list': years_list
+    }, as_dict=True)
     
+    # جلب بيانات CTC
     ctc_data = frappe.db.sql("""
         SELECT 
             S.project AS project_id,
@@ -107,10 +180,17 @@ def get_project_data(filters):
         JOIN `tabCTC Distribution` D ON S.parent = D.name
         WHERE 
             S.project IN %(project_ids)s 
-            AND YEAR(D.posting_date) IN (2023, 2024, 2025)
+            AND D.posting_date BETWEEN %(from_date)s AND %(to_date)s
+            AND YEAR(D.posting_date) IN %(years_list)s
         GROUP BY S.project, YEAR(D.posting_date)
-    """, {"project_ids": project_ids}, as_dict=True)
+    """, {
+        "project_ids": project_ids,
+        'from_date': from_date,
+        'to_date': to_date,
+        'years_list': years_list
+    }, as_dict=True)
     
+    # جلب التكاليف غير المباشرة
     indirect_costs = frappe.db.sql("""
         SELECT 
             gl.project AS project_id,
@@ -120,14 +200,21 @@ def get_project_data(filters):
         JOIN `tabGL Entry` AS gl ON afc.account = gl.account 
         WHERE 
             gl.project IN %(project_ids)s 
-            AND YEAR(gl.posting_date) IN (2023, 2024, 2025)
+            AND gl.posting_date BETWEEN %(from_date)s AND %(to_date)s
+            AND YEAR(gl.posting_date) IN %(years_list)s
             AND afc.type = 'Indirect' 
             AND gl.docstatus = 1 
             AND gl.is_cancelled = 0 
             AND gl.account LIKE %(acc)s
             AND gl.remarks NOT REGEXP "Cost Distribution POP" AND gl.remarks NOT REGEXP "CAPITALIZATION"
         GROUP BY gl.project, YEAR(gl.posting_date)
-    """, {"project_ids": project_ids, 'acc': '5%'}, as_dict=True)
+    """, {
+        "project_ids": project_ids, 
+        'acc': '5%',
+        'from_date': from_date,
+        'to_date': to_date,
+        'years_list': years_list
+    }, as_dict=True)
 
     # تحويل البيانات إلى قواميس للوصول السريع
     financial_dict = {(f["project_id"], f["year"]): f for f in financial_data}
@@ -137,30 +224,39 @@ def get_project_data(filters):
     data = []
     for project in projects:
         project_id = project["project_id"]
-
-        ctc_2023 = ctc_dict.get((project_id, 2023), 0)+indirect_cost_dict.get((project_id, 2023), 0)
-        ctc_2024 = ctc_dict.get((project_id, 2024), 0)+indirect_cost_dict.get((project_id, 2024), 0)
-        ctc_2025 = ctc_dict.get((project_id, 2025), 0)+indirect_cost_dict.get((project_id, 2025), 0)
-        total_ctc = ctc_2023 + ctc_2024 + ctc_2025
-
-        actual_2023 = financial_dict.get((project_id, 2023), {}).get("actual_cost", 0)
-        actual_2024 = financial_dict.get((project_id, 2024), {}).get("actual_cost", 0)
-        actual_2025 = financial_dict.get((project_id, 2025), {}).get("actual_cost", 0)
-        total_actual = actual_2023 + actual_2024 + actual_2025
-
-        revenue_2023 = financial_dict.get((project_id, 2023), {}).get("revenue", 0)
-        revenue_2024 = financial_dict.get((project_id, 2024), {}).get("revenue", 0)
-        revenue_2025 = financial_dict.get((project_id, 2025), {}).get("revenue", 0)
-        total_revenue = revenue_2023 + revenue_2024 + revenue_2025
-
-        row = {
-            **project,
-            "ctc_2023": ctc_2023, "ctc_2024": ctc_2024, "ctc_2025": ctc_2025, "total_ctc": total_ctc,
-            "actual_2023": actual_2023, "actual_2024": actual_2024, "actual_2025": actual_2025, "total_actual": total_actual,
-            "revenue_2023": revenue_2023, "revenue_2024": revenue_2024, "revenue_2025": revenue_2025, "total_revenue": total_revenue,
-            "profit_loss_ctc": total_revenue - total_ctc,
-            "profit_loss_actual": total_revenue - total_actual
-        }
+        
+        # بناء الصف بشكل ديناميكي
+        row = {**project}
+        
+        # متغيرات المجاميع
+        total_ctc = 0
+        total_actual = 0
+        total_revenue = 0
+        
+        # إضافة البيانات لكل سنة
+        for year in years_list:
+            # CTC
+            ctc_value = ctc_dict.get((project_id, year), 0) + indirect_cost_dict.get((project_id, year), 0)
+            row[f"ctc_{year}"] = ctc_value
+            total_ctc += ctc_value
+            
+            # Actual Cost
+            actual_value = financial_dict.get((project_id, year), {}).get("actual_cost", 0)
+            row[f"actual_{year}"] = actual_value
+            total_actual += actual_value
+            
+            # Revenue
+            revenue_value = financial_dict.get((project_id, year), {}).get("revenue", 0)
+            row[f"revenue_{year}"] = revenue_value
+            total_revenue += revenue_value
+        
+        # إضافة المجاميع
+        row["total_ctc"] = total_ctc
+        row["total_actual"] = total_actual
+        row["total_revenue"] = total_revenue
+        row["profit_loss_ctc"] = total_revenue - total_ctc
+        row["profit_loss_actual"] = total_revenue - total_actual
+        
         data.append(row)
         
     return data
