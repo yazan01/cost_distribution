@@ -10,8 +10,8 @@ from datetime import datetime, timedelta
 class CTCDistribution(Document):
     def validate(self):
         """Validates and processes salary slips and costing summary."""
-        # self.validate_fields()
-        # self.set_salary_slip_and_rate1()
+        self.validate_fields()
+        self.set_salary_slip_and_rate1()
         self.create_costing_summary()
         
 
@@ -58,7 +58,7 @@ class CTCDistribution(Document):
                     emp.company, 
                     emp.employment_type, 
                     emp.designation, 
-                    des.custom_level, 
+                    emp.custom_linked_level, 
                     COALESCE(lr.ctc, NULL) AS ctc, 
                     COALESCE(ts.total_hours, 0) AS total_hours
                 FROM 
@@ -68,6 +68,7 @@ class CTCDistribution(Document):
                         company, 
                         employment_type, 
                         designation, 
+                        custom_linked_level,
                         date_of_joining, 
                         relieving_date 
                     FROM 
@@ -97,7 +98,7 @@ class CTCDistribution(Document):
                         year = %s AND project IS NULL
                     ) AS lr
                 ON 
-                    des.custom_level = lr.parent
+                    emp.custom_linked_level = lr.parent
                 LEFT JOIN 
                     (SELECT 
                         employee, 
@@ -125,7 +126,7 @@ class CTCDistribution(Document):
                     emp.company, 
                     emp.employment_type, 
                     emp.designation, 
-                    des.custom_level, 
+                    emp.custom_linked_level, 
                     COALESCE(emp.ctc, NULL) AS ctc, 
                     COALESCE(ts.total_hours, 0) AS total_hours
                 FROM 
@@ -135,7 +136,8 @@ class CTCDistribution(Document):
                         ctc,
                         company, 
                         employment_type, 
-                        designation, 
+                        designation,
+                        custom_linked_level,
                         date_of_joining, 
                         relieving_date 
                     FROM 
@@ -208,7 +210,7 @@ class CTCDistribution(Document):
                     'employee_name': row.get('employee_name'),
                     'employment_type': row.get('employment_type'),
                     'designation': row.get('designation'),
-                    'level': row.get('custom_level'),
+                    'level': row.get('custom_linked_level'),
                     'ctc': flt( (flt(row.get('ctc'))/flt(number_of_days * 9)) * flt(row.get('total_hours')) ) if row.get('total_hours') > 0 else flt(row.get('ctc')),
                     'total_hours': row.get('total_hours'),
                 })
@@ -219,7 +221,7 @@ class CTCDistribution(Document):
                     'employee_name': row.get('employee_name'),
                     'employment_type': row.get('employment_type'),
                     'designation': row.get('designation'),
-                    'level': row.get('custom_level'),
+                    'level': row.get('custom_linked_level'),
                     'ctc': flt(row.get('ctc')),
                     'total_hours': row.get('total_hours'),
                 })
@@ -246,30 +248,30 @@ class CTCDistribution(Document):
         if self.distribution_type not in ['Employee', 'CTC Distribution']:
             return
 
-        # self.costing_summary = []
-        # total_cost_of_project = 0
+        self.costing_summary = []
+        total_cost_of_project = 0
 
         # Get list of permanent employees update
-        permanent_employees = [
-            salary_data.employee 
-            for salary_data in self.employee_ctc_data 
-            if salary_data.employment_type == "Permanent"
-        ]
+        # permanent_employees = [
+        #     salary_data.employee 
+        #     for salary_data in self.employee_ctc_data 
+        #     if salary_data.employment_type == "Permanent"
+        # ]
         
         # Remove only permanent employee entries from costing summaryupdate update
-        self.costing_summary = [
-            entry for entry in self.costing_summary 
-            if entry.employee not in permanent_employees
-        ]
+        # self.costing_summary = [
+        #     entry for entry in self.costing_summary 
+        #     if entry.employee not in permanent_employees
+        # ]
         # update
-        total_cost_of_project = sum([entry.total_cost_of_project for entry in self.costing_summary])
+        # total_cost_of_project = sum([entry.total_cost_of_project for entry in self.costing_summary])
     
 
         for salary_data in self.employee_ctc_data:
 
             # Skip if not permanent employee update
-            if salary_data.employment_type != "Permanent":
-                continue
+            # if salary_data.employment_type != "Permanent":
+            #     continue
         
             time_sheet_summary = get_time_sheet_summary(salary_data, self)
             if time_sheet_summary:
