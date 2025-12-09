@@ -32,6 +32,20 @@ frappe.query_reports["Projects Consolidated Financials"] = {
 			"fieldtype": "Select", 
 			"options": ["", "Open", "Completed", "Cancelled"],
 			"default": "" 
+		},
+		{
+			"fieldname": "from_date",
+			"label": __("From Date"),
+			"fieldtype": "Date",
+			"default": frappe.datetime.add_years(frappe.datetime.get_today(), -2),
+			"reqd": 1
+		},
+		{
+			"fieldname": "to_date",
+			"label": __("To Date"),
+			"fieldtype": "Date",
+			"default": frappe.datetime.get_today(),
+			"reqd": 1
 		}
 	],
 
@@ -95,21 +109,19 @@ frappe.query_reports["Projects Consolidated Financials"] = {
 
 			console.log("Clicked cell:", { columnName, projectId });
 
-			// Set from_date and to_date based on column name
+			// استخراج السنة من اسم العمود
 			let fromDate, toDate;
-			if (columnName.includes('2023')) {
-				fromDate = '2023-01-01';
-				toDate = '2023-12-31';
-			} else if (columnName.includes('2024')) {
-				fromDate = '2024-01-01';
-				toDate = '2024-12-31';
-			} else if (columnName.includes('2025')) {
-				fromDate = '2025-01-01';
-				toDate = '2025-12-31';
+			const yearMatch = columnName.match(/(\d{4})/);
+			
+			if (yearMatch) {
+				const year = yearMatch[1];
+				fromDate = `${year}-01-01`;
+				toDate = `${year}-12-31`;
 			} else {
-				// Default if no specific year
-				fromDate = '2023-01-01';
-				toDate = frappe.datetime.get_today();
+				// إذا كان العمود "total"، استخدم فلاتر التاريخ من التقرير
+				const filters = frappe.query_report.get_filter_values();
+				fromDate = filters.from_date || '2023-01-01';
+				toDate = filters.to_date || frappe.datetime.get_today();
 			}
 
 			let reporttype;
