@@ -168,7 +168,7 @@ def execute(filters=None):
             AND gl.posting_date BETWEEN %(from_date)s AND %(to_date)s
 			AND pro.project_manager IN %(manager)s
 			AND pro.project_type IN %(type)s
-            AND gl.remarks NOT REGEXP "Cost Distribution POP" AND gl.remarks NOT REGEXP "CAPITALIZATION" AND ((gl.remarks NOT REGEXP "WIP-2024" AND gl.company = "iValueUAE") OR (gl.remarks NOT REGEXP "WIP 2024" AND gl.company = "iValueJOR") OR (gl.remarks NOT REGEXP "-WIP" AND gl.company = "iValue KSA"))
+            AND gl.remarks NOT REGEXP "Cost Distribution POP" AND gl.remarks NOT REGEXP "CAPITALIZATION" 
         GROUP BY
             afc.account, gl.project
 
@@ -219,7 +219,7 @@ def execute(filters=None):
             AND gl.project IN %(accessible_projects_exp)s
             AND pro.project_manager IN %(manager)s
             AND pro.project_type IN %(type)s
-            AND gl.remarks NOT REGEXP "Cost Distribution POP" AND gl.remarks NOT REGEXP "CAPITALIZATION" AND ((gl.remarks NOT REGEXP "WIP-2024" AND gl.company = "iValueUAE") OR (gl.remarks NOT REGEXP "WIP 2024" AND gl.company = "iValueJOR") OR (gl.remarks NOT REGEXP "-WIP" AND gl.company = "iValue KSA"))
+            AND gl.remarks NOT REGEXP "Cost Distribution POP" AND gl.remarks NOT REGEXP "CAPITALIZATION" 
         GROUP BY
             avyc.account_for_ctc, gl.project
 
