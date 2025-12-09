@@ -6,19 +6,20 @@ from datetime import datetime
 def execute(filters):
     from_date = filters.get("from_date")
     to_date = filters.get("to_date")
+    show_ctc = filters.get("show_ctc")
     
     if not from_date or not to_date:
-        frappe.throw(_("من فضلك اختر تاريخ البداية والنهاية"))
+        frappe.throw(_("Please select the start and end dates"))
     
     # توليد الأعمدة الديناميكية بناءً على التواريخ
-    columns = get_dynamic_columns(from_date, to_date)
+    columns = get_dynamic_columns(from_date, to_date, show_ctc)
     
     # جلب البيانات
     data = get_project_data(filters)
     
     return columns, data
 
-def get_dynamic_columns(from_date, to_date):
+def get_dynamic_columns(from_date, to_date, show_ctc):
     """توليد الأعمدة بناءً على السنوات المختارة"""
     
     from_year = datetime.strptime(str(from_date), "%Y-%m-%d").year
@@ -37,7 +38,6 @@ def get_dynamic_columns(from_date, to_date):
     ]
     
     # إضافة أعمدة CTC لكل سنة
-    show_ctc = filters.get("show_ctc")
     if show_ctc:
         for year in range(from_year, to_year + 1):
             columns.append({
