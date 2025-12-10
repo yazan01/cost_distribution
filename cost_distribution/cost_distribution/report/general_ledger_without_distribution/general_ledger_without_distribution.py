@@ -695,17 +695,89 @@ def get_account_type_map(company):
 def get_result_as_list(data, filters):
 	balance, _balance_in_account_currency = 0, 0
 	inv_details = get_supplier_invoice_details()
+	
+	# Variables for financing cost calculation
+	accumulated_cash_out = 0
+	accumulated_cash_in = 0
+	financing_rate = 0.14 / 12  # 14% annual rate divided by 12 months = 1.17% monthly
+	accumulated_financing_cost = 0
+	current_project = None
+	current_month = None
 
 	for d in data:
 		if not d.get("posting_date"):
 			balance, _balance_in_account_currency = 0, 0
+			# Reset financing calculations for opening entries
+			if filters.get("financing_costing"):
+				accumulated_cash_out = 0
+				accumulated_cash_in = 0
+				accumulated_financing_cost = 0
+				current_project = None
+				current_month = None
 
 		balance = get_balance(d, balance, "debit", "credit")
 		d["balance"] = balance
-		d["financial_balance"] = balance * 1
 
 		d["account_currency"] = filters.get("account_currency") or filters.get("presentation_currency")
 		d["bill_no"] = inv_details.get(d.get("against_voucher"), "")
+		
+		# Add financing cost columns if filter is enabled
+		if filters.get("financing_costing") and d.get("posting_date"):
+			project = d.get("project", "")
+			posting_date = d.get("posting_date")
+			debit = d.get("debit", 0)
+			credit = d.get("credit", 0)
+			
+			# Check if project changed
+			if project != current_project:
+				# Reset when project changes
+				accumulated_cash_out = debit
+				accumulated_cash_in = credit
+				current_project = project
+				current_month = posting_date.month if hasattr(posting_date, 'month') else None
+				accumulated_financing_cost = 0
+				d["trans_month"] = current_month
+				d["project_code_final"] = project
+			else:
+				# Same project, accumulate
+				accumulated_cash_out += debit
+				accumulated_cash_in += credit
+				
+				# Check if month changed
+				row_month = posting_date.month if hasattr(posting_date, 'month') else None
+				if row_month != current_month:
+					d["trans_month"] = row_month
+					current_month = row_month
+				else:
+					d["trans_month"] = None
+				d["project_code_final"] = None
+			
+			d["accumulated_cash_out"] = accumulated_cash_out
+			d["accumulated_cash_in"] = accumulated_cash_in
+			
+			# Calculate cash difference
+			cash_diff = accumulated_cash_in - accumulated_cash_out
+			d["cash_diff"] = cash_diff
+			
+			# Calculate financing cost (only if cash_diff is negative)
+			if cash_diff < 0:
+				financing_cost = abs(cash_diff) * financing_rate
+			else:
+				financing_cost = 0
+			d["financing_cost"] = financing_cost
+			
+			# Accumulate financing cost
+			accumulated_financing_cost += financing_cost
+			d["accumulated_financing_cost"] = accumulated_financing_cost
+		else:
+			# Set to None if financing_costing is not enabled
+			d["trans_month"] = None
+			d["accumulated_cash_out"] = None
+			d["accumulated_cash_in"] = None
+			d["cash_diff"] = None
+			d["financing_cost"] = None
+			d["accumulated_financing_cost"] = None
+			d["project_code_final"] = None
 
 	return data
 
@@ -786,13 +858,54 @@ def get_columns(filters):
 			"fieldtype": "Float",
 			"width": 130,
 		},
-		{
-			"label": _("Financial Balance ({0})").format(currency),
-			"fieldname": "financial_balance",
-			"fieldtype": "Float",
-			"width": 130,
-		},
 	]
+	
+	# Add financing cost columns if filter is enabled
+	if filters.get("financing_costing"):
+		columns += [
+			{
+				"label": _("Project Code Final Entry"),
+				"fieldname": "project_code_final",
+				"fieldtype": "Data",
+				"width": 150,
+			},
+			{
+				"label": _("TransMonth"),
+				"fieldname": "trans_month",
+				"fieldtype": "Int",
+				"width": 100,
+			},
+			{
+				"label": _("Accumulated CASH OUT ({0})").format(currency),
+				"fieldname": "accumulated_cash_out",
+				"fieldtype": "Float",
+				"width": 150,
+			},
+			{
+				"label": _("Accumulated CASH IN ({0})").format(currency),
+				"fieldname": "accumulated_cash_in",
+				"fieldtype": "Float",
+				"width": 150,
+			},
+			{
+				"label": _("CASH DIFF ({0})").format(currency),
+				"fieldname": "cash_diff",
+				"fieldtype": "Float",
+				"width": 130,
+			},
+			{
+				"label": _("Financing Cost 1.17% ({0})").format(currency),
+				"fieldname": "financing_cost",
+				"fieldtype": "Float",
+				"width": 150,
+			},
+			{
+				"label": _("Accum Financing Cost ({0})").format(currency),
+				"fieldname": "accumulated_financing_cost",
+				"fieldtype": "Float",
+				"width": 150,
+			},
+		]
 
 	if filters.get("add_values_in_transaction_currency"):
 		columns += [
