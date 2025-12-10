@@ -206,6 +206,29 @@ def get_result(filters, account_details):
 
 	data = get_data_with_opening_closing(filters, account_details, accounting_dimensions, gl_entries)
 
+	# Sort by project if financing_costing is enabled
+	if filters.get("financing_costing"):
+		# Separate opening entries from regular entries
+		opening_entries = []
+		regular_entries = []
+		
+		for entry in data:
+			if not entry.get("posting_date"):
+				opening_entries.append(entry)
+			else:
+				regular_entries.append(entry)
+		
+		# Sort regular entries by project and posting_date
+		regular_entries.sort(key=lambda x: (
+			x.get("project") or "",  # Sort by project first
+			x.get("posting_date") or "",  # Then by date
+			x.get("account") or "",  # Then by account
+			x.get("voucher_no") or ""  # Finally by voucher
+		))
+		
+		# Combine back: opening entries first, then sorted regular entries
+		data = opening_entries + regular_entries
+
 	result = get_result_as_list(data, filters)
 
 	return result
@@ -734,18 +757,18 @@ def get_result_as_list(data, filters):
 			d["_project"] = project
 			d["_month"] = posting_date.month if hasattr(posting_date, 'month') else None
 			
-			# Check if project changed
+			# Check if project changed - RESET accumulated values when project changes
 			if project != current_project:
-				# Reset when project changes
-				accumulated_cash_out = debit
-				accumulated_cash_in = credit
+				# Reset all accumulated values when project changes
+				accumulated_cash_out = 0
+				accumulated_cash_in = 0
+				accumulated_financing_cost = 0
 				current_project = project
 				current_month = posting_date.month if hasattr(posting_date, 'month') else None
-				accumulated_financing_cost = 0
-			else:
-				# Same project, accumulate
-				accumulated_cash_out += debit
-				accumulated_cash_in += credit
+			
+			# Accumulate for current project
+			accumulated_cash_out += debit
+			accumulated_cash_in += credit
 			
 			d["accumulated_cash_out"] = accumulated_cash_out
 			d["accumulated_cash_in"] = accumulated_cash_in
