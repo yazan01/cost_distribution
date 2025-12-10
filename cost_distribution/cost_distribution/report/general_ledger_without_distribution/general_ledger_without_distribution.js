@@ -241,7 +241,11 @@ frappe.query_reports["General Ledger Without Distribution"] = {
 			label: __("Include Cost Distribution"),
 			fieldtype: "Check",
 		},
-		
+		{
+			fieldname: "financing_costing",
+			label: __("Financing Costing"),
+			fieldtype: "Check",
+		},
 	],
 };
 
