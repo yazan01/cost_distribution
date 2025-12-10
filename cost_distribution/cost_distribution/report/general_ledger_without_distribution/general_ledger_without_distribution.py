@@ -704,7 +704,8 @@ def get_result_as_list(data, filters):
 	current_project = None
 	current_month = None
 
-	for d in data:
+	# First pass: calculate all values
+	for i, d in enumerate(data):
 		if not d.get("posting_date"):
 			balance, _balance_in_account_currency = 0, 0
 			# Reset financing calculations for opening entries
@@ -728,6 +729,11 @@ def get_result_as_list(data, filters):
 			debit = d.get("debit", 0)
 			credit = d.get("credit", 0)
 			
+			# Store row index for later marking
+			d["_row_index"] = i
+			d["_project"] = project
+			d["_month"] = posting_date.month if hasattr(posting_date, 'month') else None
+			
 			# Check if project changed
 			if project != current_project:
 				# Reset when project changes
@@ -736,21 +742,10 @@ def get_result_as_list(data, filters):
 				current_project = project
 				current_month = posting_date.month if hasattr(posting_date, 'month') else None
 				accumulated_financing_cost = 0
-				d["trans_month"] = current_month
-				d["project_code_final"] = project
 			else:
 				# Same project, accumulate
 				accumulated_cash_out += debit
 				accumulated_cash_in += credit
-				
-				# Check if month changed
-				row_month = posting_date.month if hasattr(posting_date, 'month') else None
-				if row_month != current_month:
-					d["trans_month"] = row_month
-					current_month = row_month
-				else:
-					d["trans_month"] = None
-				d["project_code_final"] = None
 			
 			d["accumulated_cash_out"] = accumulated_cash_out
 			d["accumulated_cash_in"] = accumulated_cash_in
@@ -769,6 +764,10 @@ def get_result_as_list(data, filters):
 			# Accumulate financing cost
 			accumulated_financing_cost += financing_cost
 			d["accumulated_financing_cost"] = accumulated_financing_cost
+			
+			# Initialize as None, will be set in second pass
+			d["trans_month"] = None
+			d["project_code_final"] = None
 		else:
 			# Set to None if financing_costing is not enabled
 			d["trans_month"] = None
@@ -778,6 +777,37 @@ def get_result_as_list(data, filters):
 			d["financing_cost"] = None
 			d["accumulated_financing_cost"] = None
 			d["project_code_final"] = None
+
+	# Second pass: mark last record of each project and month
+	if filters.get("financing_costing"):
+		for i in range(len(data)):
+			d = data[i]
+			if d.get("posting_date") and d.get("_project"):
+				# Check if this is the last record of the project
+				is_last_of_project = True
+				if i < len(data) - 1:
+					next_row = data[i + 1]
+					if next_row.get("_project") == d.get("_project"):
+						is_last_of_project = False
+				
+				if is_last_of_project:
+					d["project_code_final"] = d.get("_project")
+				
+				# Check if this is the last record of the month (within same project)
+				is_last_of_month = True
+				current_project = d.get("_project")
+				current_month = d.get("_month")
+				if i < len(data) - 1:
+					for j in range(i + 1, len(data)):
+						next_row = data[j]
+						if next_row.get("_project") != current_project:
+							break
+						if next_row.get("_month") == current_month:
+							is_last_of_month = False
+							break
+				
+				if is_last_of_month:
+					d["trans_month"] = d.get("_month")
 
 	return data
 
