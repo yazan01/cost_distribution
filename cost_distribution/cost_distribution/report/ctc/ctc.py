@@ -44,10 +44,9 @@ def execute(filters=None):
         accessible_projects_list_notexp = list(
             set(accessible_projects_list) - set(accessible_projects_list_exp_1)
         )
-
-		accessible_projects_list_exp = list(
-		    set(accessible_projects_list_exp_1) & set(accessible_projects_list)
-		)
+        accessible_projects_list_exp = list(
+            set(accessible_projects_list_exp_1) & set(accessible_projects_list)
+        )
 
     else:
         accessible_projects_list = selected_projects
@@ -59,10 +58,9 @@ def execute(filters=None):
         accessible_projects_list_notexp = list(
             set(accessible_projects_list) - set(accessible_projects_list_exp_1)
         )
-
-		accessible_projects_list_exp = list(
-		    set(accessible_projects_list_exp_1) & set(accessible_projects_list)
-		)
+        accessible_projects_list_exp = list(
+            set(accessible_projects_list_exp_1) & set(accessible_projects_list)
+        )
     
     if not accessible_projects_list_notexp:
         accessible_projects_list_notexp = ['__DUMMY_PROJECT_NEVER_EXISTS__']
