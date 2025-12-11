@@ -39,22 +39,30 @@ def execute(filters=None):
 
         #update
         accessible_projects_exp = frappe.db.sql("SELECT name FROM `tabProject Accounts For CTC`", as_list=True)
-        accessible_projects_list_exp = [project[0] for project in accessible_projects_exp]
+        accessible_projects_list_exp_1 = [project[0] for project in accessible_projects_exp]
 
         accessible_projects_list_notexp = list(
-            set(accessible_projects_list) - set(accessible_projects_list_exp)
+            set(accessible_projects_list) - set(accessible_projects_list_exp_1)
         )
+
+		accessible_projects_list_exp = list(
+		    set(accessible_projects_list_exp_1) & set(accessible_projects_list)
+		)
 
     else:
         accessible_projects_list = selected_projects
 
         #update
         accessible_projects_exp = frappe.db.sql("SELECT name FROM `tabProject Accounts For CTC`", as_list=True)
-        accessible_projects_list_exp = [project[0] for project in accessible_projects_exp]
+        accessible_projects_list_exp_1 = [project[0] for project in accessible_projects_exp]
 
         accessible_projects_list_notexp = list(
-            set(accessible_projects_list) - set(accessible_projects_list_exp)
+            set(accessible_projects_list) - set(accessible_projects_list_exp_1)
         )
+
+		accessible_projects_list_exp = list(
+		    set(accessible_projects_list_exp_1) & set(accessible_projects_list)
+		)
     
     if not accessible_projects_list_notexp:
         accessible_projects_list_notexp = ['__DUMMY_PROJECT_NEVER_EXISTS__']
