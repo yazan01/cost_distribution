@@ -120,7 +120,7 @@ def get_project_data(filters):
         ORDER BY S.project, YEAR(D.posting_date), MONTH(D.posting_date)
     """, {"project_ids": project_ids}, as_dict=True)
 
-    indirect_data = []
+    indirect_costs = []
     if projects_list_notexp:
         indirect_costs = frappe.db.sql("""
             SELECT 
