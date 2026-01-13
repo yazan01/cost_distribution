@@ -93,6 +93,17 @@ def get_project_data(filters):
     if not project_ids:
         return []
 
+    #update
+    projects_exp = frappe.db.sql("SELECT name FROM `tabProject Accounts For CTC`", as_list=True)
+    projects_list_exp_1 = [project[0] for project in projects_exp]
+
+    projects_list_notexp = list(
+        set(project_ids) - set(projects_list_exp_1)
+    )
+    projects_list_exp = list(
+        set(projects_list_exp_1) & set(project_ids)
+    )
+
     date_condition = ""
     if from_date_filter and to_date_filter:
         date_condition = "AND gl.posting_date BETWEEN %(from_date)s AND %(to_date)s"
@@ -115,8 +126,9 @@ def get_project_data(filters):
     if data_type == "CTC":
         # CTC Cost data
         ctc_entries = get_ctc_entries(params, project_ids, date_condition_ctc)
-        indirect_entries = get_indirect_cost_entries(params, project_ids, date_condition)
-        data = ctc_entries + indirect_entries
+        indirect_entries = get_indirect_cost_entries(params, projects_list_notexp, date_condition)
+        indirect_entries_exp = get_indirect_cost_entries_exp(params, projects_list_exp, date_condition)
+        data = ctc_entries + indirect_entries + indirect_entries_exp
     
     #elif data_type == "Actual Cost":
         # Actual Cost data
@@ -132,8 +144,9 @@ def get_project_data(filters):
         # Profit/Loss on CTC
         revenue_data = get_revenue_entries(params, project_ids, date_condition)
         ctc_entries = get_ctc_entries(params, project_ids, date_condition_ctc)
-        indirect_entries = get_indirect_cost_entries(params, project_ids, date_condition)
-        data = revenue_data + ctc_entries + indirect_entries
+        indirect_entries = get_indirect_cost_entries(params, projects_list_notexp, date_condition)
+        indirect_entries_exp = get_indirect_cost_entries_exp(params, projects_list_exp, date_condition)
+        data = revenue_data + ctc_entries + indirect_entries + indirect_entries_exp
     
     #elif data_type == "Profit Loss Actual":
         # Profit/Loss on Actual Cost
@@ -348,6 +361,44 @@ def get_indirect_cost_entries(params, project_ids, date_condition):
             AND afc.type = 'Indirect'
             AND gl.docstatus = 1 
             AND gl.is_cancelled = 0
+            AND gl.account LIKE %(acc)s
+            AND gl.remarks NOT REGEXP "Cost Distribution POP" AND gl.remarks NOT REGEXP "CAPITALIZATION"
+            {date_condition}
+        ORDER BY gl.posting_date
+    """, {**params, "project_ids": project_ids}, as_dict=True)
+    
+    return entries
+
+def get_indirect_cost_entries_exp(params, project_ids, date_condition):
+    """Get indirect cost entries for the specified project and date range"""
+    
+    entries = frappe.db.sql(f"""
+        SELECT
+            gl.project,
+            gl.posting_date,
+            gl.company,
+            gl.account,
+            gl.voucher_type,
+            gl.voucher_no,
+            gl.party_type AS party_type,
+            CASE 
+                WHEN gl.party_type = 'Employee' THEN 
+                    CONCAT(gl.party, ' : ', (SELECT employee_name FROM `tabEmployee` WHERE name = gl.party))
+                ELSE gl.party 
+            END AS party,
+            gl.remarks,
+            gl.debit * afc.currency AS debit,
+            gl.credit * afc.currency AS credit
+        FROM `tabAccount VS Year CTC` AS avyc
+        JOIN `tabAccounts For CTC` AS afc ON avyc.account_for_ctc = afc.account
+        JOIN `tabGL Entry` AS gl ON gl.account = afc.account 
+        WHERE 
+            gl.project IN %(project_ids)s
+            AND avyc.parent = gl.project
+            AND afc.type = 'Indirect'
+            AND gl.docstatus = 1 
+            AND gl.is_cancelled = 0
+            AND YEAR(gl.posting_date) = avyc.year
             AND gl.account LIKE %(acc)s
             AND gl.remarks NOT REGEXP "Cost Distribution POP" AND gl.remarks NOT REGEXP "CAPITALIZATION"
             {date_condition}
