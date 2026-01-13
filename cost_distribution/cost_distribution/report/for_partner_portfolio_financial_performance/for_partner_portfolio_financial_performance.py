@@ -76,6 +76,17 @@ def get_project_data(filters):
     if not project_ids:
         return []
 
+    #update
+    projects_exp = frappe.db.sql("SELECT name FROM `tabProject Accounts For CTC`", as_list=True)
+    projects_list_exp_1 = [project[0] for project in projects_exp]
+
+    projects_list_notexp = list(
+        set(project_ids) - set(projects_list_exp_1)
+    )
+    projects_list_exp = list(
+        set(projects_list_exp_1) & set(project_ids)
+    )
+
     financial_data = frappe.db.sql("""
         SELECT 
             gl.project AS project_id,
