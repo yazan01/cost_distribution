@@ -142,6 +142,19 @@ def get_project_data(filters):
     project_ids = [p["project_id"] for p in projects]
     if not project_ids:
         return []
+
+
+    #update
+    projects_exp = frappe.db.sql("SELECT name FROM `tabProject Accounts For CTC`", as_list=True)
+    projects_list_exp_1 = [project[0] for project in projects_exp]
+
+    projects_list_notexp = list(
+        set(project_ids) - set(projects_list_exp_1)
+    )
+    projects_list_exp = list(
+        set(projects_list_exp_1) & set(project_ids)
+    )
+
     
     # جلب البيانات المالية
     financial_data = frappe.db.sql("""
@@ -196,35 +209,70 @@ def get_project_data(filters):
     }, as_dict=True)
     
     # جلب التكاليف غير المباشرة
-    indirect_costs = frappe.db.sql("""
-        SELECT 
-            gl.project AS project_id,
-            YEAR(gl.posting_date) AS year,
-            SUM((gl.debit - gl.credit) * afc.currency) AS indirect_cost
-        FROM `tabAccounts For CTC` AS afc
-        JOIN `tabGL Entry` AS gl ON afc.account = gl.account 
-        WHERE 
-            gl.project IN %(project_ids)s 
-            AND gl.posting_date BETWEEN %(from_date)s AND %(to_date)s
-            AND YEAR(gl.posting_date) IN %(years_list)s
-            AND afc.type = 'Indirect' 
-            AND gl.docstatus = 1 
-            AND gl.is_cancelled = 0 
-            AND gl.account LIKE %(acc)s
-            AND gl.remarks NOT REGEXP "Cost Distribution POP" AND gl.remarks NOT REGEXP "CAPITALIZATION"
-        GROUP BY gl.project, YEAR(gl.posting_date)
-    """, {
-        "project_ids": project_ids, 
-        'acc': '5%',
-        'from_date': from_date,
-        'to_date': to_date,
-        'years_list': years_list
-    }, as_dict=True)
+    indirect_costs = []
+    if projects_list_notexp:
+        indirect_costs = frappe.db.sql("""
+            SELECT 
+                gl.project AS project_id,
+                YEAR(gl.posting_date) AS year,
+                SUM((gl.debit - gl.credit) * afc.currency) AS indirect_cost
+            FROM `tabAccounts For CTC` AS afc
+            JOIN `tabGL Entry` AS gl ON afc.account = gl.account 
+            WHERE 
+                gl.project IN %(project_ids)s 
+                AND gl.posting_date BETWEEN %(from_date)s AND %(to_date)s
+                AND YEAR(gl.posting_date) IN %(years_list)s
+                AND afc.type = 'Indirect' 
+                AND gl.docstatus = 1 
+                AND gl.is_cancelled = 0 
+                AND gl.account LIKE %(acc)s
+                AND gl.remarks NOT REGEXP "Cost Distribution POP" AND gl.remarks NOT REGEXP "CAPITALIZATION"
+            GROUP BY gl.project, YEAR(gl.posting_date)
+        """, {
+            "project_ids": projects_list_notexp, 
+            'acc': '5%',
+            'from_date': from_date,
+            'to_date': to_date,
+            'years_list': years_list
+        }, as_dict=True)
+
+
+    indirect_costs_exp = []
+    if projects_list_exp:
+        indirect_costs_exp = frappe.db.sql("""
+            SELECT 
+                gl.project AS project_id,
+                YEAR(gl.posting_date) AS year,
+                SUM((gl.debit - gl.credit) * afc.currency) AS indirect_cost
+            FROM `tabAccount VS Year CTC` AS avyc
+            JOIN `tabAccounts For CTC` AS afc ON avyc.account_for_ctc = afc.account
+            JOIN `tabGL Entry` AS gl ON gl.account = afc.account 
+            WHERE 
+                gl.project IN %(project_ids)s 
+                AND avyc.parent = gl.project
+                AND gl.posting_date BETWEEN %(from_date)s AND %(to_date)s
+                AND YEAR(gl.posting_date) IN %(years_list)s
+                AND YEAR(gl.posting_date) = avyc.year
+                AND afc.type = 'Indirect' 
+                AND gl.docstatus = 1 
+                AND gl.is_cancelled = 0 
+                AND gl.account LIKE %(acc)s
+                AND gl.remarks NOT REGEXP "Cost Distribution POP" AND gl.remarks NOT REGEXP "CAPITALIZATION"
+            GROUP BY gl.project, YEAR(gl.posting_date)
+        """, {
+            "project_ids": projects_list_exp, 
+            'acc': '5%',
+            'from_date': from_date,
+            'to_date': to_date,
+            'years_list': years_list
+        }, as_dict=True)
+
 
     # تحويل البيانات إلى قواميس للوصول السريع
     financial_dict = {(f["project_id"], f["year"]): f for f in financial_data}
     ctc_dict = {(c["project_id"], c["year"]): c["ctc_cost"] for c in ctc_data}
     indirect_cost_dict = {(t["project_id"], t["year"]): t["indirect_cost"] for t in indirect_costs}
+    indirect_cost_dict_exp = {(t["project_id"], t["year"]): t["indirect_cost"] for t in indirect_costs_exp}
 
     data = []
     for project in projects:
@@ -241,7 +289,7 @@ def get_project_data(filters):
         # إضافة البيانات لكل سنة
         for year in years_list:
             # CTC
-            ctc_value = ctc_dict.get((project_id, year), 0) + indirect_cost_dict.get((project_id, year), 0)
+            ctc_value = ctc_dict.get((project_id, year), 0) + indirect_cost_dict.get((project_id, year), 0) + indirect_cost_dict_exp.get((project_id, year), 0)
             row[f"ctc_{year}"] = ctc_value
             total_ctc += ctc_value
             
