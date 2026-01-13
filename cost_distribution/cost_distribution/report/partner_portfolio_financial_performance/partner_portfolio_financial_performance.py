@@ -120,44 +120,48 @@ def get_project_data(filters):
         ORDER BY S.project, YEAR(D.posting_date), MONTH(D.posting_date)
     """, {"project_ids": project_ids}, as_dict=True)
 
-    indirect_costs = frappe.db.sql("""
-        SELECT 
-            gl.project AS project_id,
-            CONCAT(LPAD(MONTH(gl.posting_date), 2, '0'), '-', YEAR(gl.posting_date)) AS month_year,
-            SUM((gl.debit - gl.credit) * afc.currency) AS indirect_cost
-        FROM `tabAccounts For CTC` AS afc
-        JOIN `tabGL Entry` AS gl ON afc.account = gl.account 
-        WHERE 
-            gl.project IN %(project_ids)s 
-            AND afc.type = 'Indirect' 
-            AND gl.docstatus = 1 
-            AND gl.is_cancelled = 0 
-            AND gl.account LIKE %(acc)s
-            AND gl.remarks NOT REGEXP "Cost Distribution POP" AND gl.remarks NOT REGEXP "CAPITALIZATION"
-        GROUP BY gl.project, YEAR(gl.posting_date), MONTH(gl.posting_date)
-        ORDER BY gl.project, YEAR(gl.posting_date), MONTH(gl.posting_date)
-    """, {"project_ids": projects_list_notexp, 'acc': '5%'}, as_dict=True)
+    indirect_data = []
+    if projects_list_notexp:
+        indirect_costs = frappe.db.sql("""
+            SELECT 
+                gl.project AS project_id,
+                CONCAT(LPAD(MONTH(gl.posting_date), 2, '0'), '-', YEAR(gl.posting_date)) AS month_year,
+                SUM((gl.debit - gl.credit) * afc.currency) AS indirect_cost
+            FROM `tabAccounts For CTC` AS afc
+            JOIN `tabGL Entry` AS gl ON afc.account = gl.account 
+            WHERE 
+                gl.project IN %(project_ids)s 
+                AND afc.type = 'Indirect' 
+                AND gl.docstatus = 1 
+                AND gl.is_cancelled = 0 
+                AND gl.account LIKE %(acc)s
+                AND gl.remarks NOT REGEXP "Cost Distribution POP" AND gl.remarks NOT REGEXP "CAPITALIZATION"
+            GROUP BY gl.project, YEAR(gl.posting_date), MONTH(gl.posting_date)
+            ORDER BY gl.project, YEAR(gl.posting_date), MONTH(gl.posting_date)
+        """, {"project_ids": projects_list_notexp, 'acc': '5%'}, as_dict=True)
 
-    indirect_costs_exp = frappe.db.sql("""
-        SELECT 
-            gl.project AS project_id,
-            CONCAT(LPAD(MONTH(gl.posting_date), 2, '0'), '-', YEAR(gl.posting_date)) AS month_year,
-            SUM((gl.debit - gl.credit) * afc.currency) AS indirect_cost
-        FROM `tabAccount VS Year CTC` AS avyc
-        JOIN `tabAccounts For CTC` AS afc ON avyc.account_for_ctc = afc.account
-        JOIN `tabGL Entry` AS gl ON gl.account = afc.account 
-        WHERE 
-            gl.project IN %(project_ids)s 
-            AND avyc.parent = gl.project
-            AND afc.type = 'Indirect' 
-            AND gl.docstatus = 1 
-            AND gl.is_cancelled = 0 
-            AND YEAR(gl.posting_date) = avyc.year
-            AND gl.account LIKE %(acc)s
-            AND gl.remarks NOT REGEXP "Cost Distribution POP" AND gl.remarks NOT REGEXP "CAPITALIZATION"
-        GROUP BY gl.project, YEAR(gl.posting_date), MONTH(gl.posting_date)
-        ORDER BY gl.project, YEAR(gl.posting_date), MONTH(gl.posting_date)
-    """, {"project_ids": projects_list_exp, 'acc': '5%'}, as_dict=True)
+    indirect_costs_exp = []
+    if projects_list_exp:
+        indirect_costs_exp = frappe.db.sql("""
+            SELECT 
+                gl.project AS project_id,
+                CONCAT(LPAD(MONTH(gl.posting_date), 2, '0'), '-', YEAR(gl.posting_date)) AS month_year,
+                SUM((gl.debit - gl.credit) * afc.currency) AS indirect_cost
+            FROM `tabAccount VS Year CTC` AS avyc
+            JOIN `tabAccounts For CTC` AS afc ON avyc.account_for_ctc = afc.account
+            JOIN `tabGL Entry` AS gl ON gl.account = afc.account 
+            WHERE 
+                gl.project IN %(project_ids)s 
+                AND avyc.parent = gl.project
+                AND afc.type = 'Indirect' 
+                AND gl.docstatus = 1 
+                AND gl.is_cancelled = 0 
+                AND YEAR(gl.posting_date) = avyc.year
+                AND gl.account LIKE %(acc)s
+                AND gl.remarks NOT REGEXP "Cost Distribution POP" AND gl.remarks NOT REGEXP "CAPITALIZATION"
+            GROUP BY gl.project, YEAR(gl.posting_date), MONTH(gl.posting_date)
+            ORDER BY gl.project, YEAR(gl.posting_date), MONTH(gl.posting_date)
+        """, {"project_ids": projects_list_exp, 'acc': '5%'}, as_dict=True)
 
     # تجميع كل المفاتيح لتوحيد العرض
     all_keys = set()
