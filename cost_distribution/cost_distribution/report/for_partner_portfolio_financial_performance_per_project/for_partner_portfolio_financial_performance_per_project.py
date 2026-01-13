@@ -88,6 +88,19 @@ def get_project_data(filters):
     if not project_ids:
         return []
 
+    
+    #update
+    projects_exp = frappe.db.sql("SELECT name FROM `tabProject Accounts For CTC`", as_list=True)
+    projects_list_exp_1 = [project[0] for project in projects_exp]
+
+    projects_list_notexp = list(
+        set(project_ids) - set(projects_list_exp_1)
+    )
+    projects_list_exp = list(
+        set(projects_list_exp_1) & set(project_ids)
+    )
+
+
     date_condition = ""
     if from_date_filter and to_date_filter:
         date_condition = "AND gl.posting_date BETWEEN %(from_date)s AND %(to_date)s"
@@ -148,11 +161,32 @@ def get_project_data(filters):
             AND gl.remarks NOT REGEXP "Cost Distribution POP" AND gl.remarks NOT REGEXP "CAPITALIZATION"
             {date_condition}
         GROUP BY gl.project
-    """, {**params, "project_ids": project_ids}, as_dict=True)
+    """, {**params, "project_ids": projects_list_notexp}, as_dict=True)
+
+    indirect_data_exp = frappe.db.sql(f"""
+        SELECT 
+            gl.project AS project_id,
+            SUM((gl.debit - gl.credit) * afc.currency) AS indirect_cost
+        FROM `tabAccount VS Year CTC` AS avyc
+        JOIN `tabAccounts For CTC` AS afc ON avyc.account_for_ctc = afc.account
+        JOIN `tabGL Entry` AS gl ON gl.account = afc.account
+        WHERE 
+            gl.project IN %(project_ids)s
+            AND avyc.parent = gl.project
+            AND afc.type = 'Indirect'
+            AND gl.docstatus = 1 
+            AND gl.is_cancelled = 0
+            AND YEAR(gl.posting_date) = avyc.year
+            AND gl.account LIKE %(acc)s
+            AND gl.remarks NOT REGEXP "Cost Distribution POP" AND gl.remarks NOT REGEXP "CAPITALIZATION"
+            {date_condition}
+        GROUP BY gl.project
+    """, {**params, "project_ids": projects_list_exp}, as_dict=True)
 
     financial_lookup = {d["project_id"]: d for d in financial_data}
     ctc_lookup = {d["project_id"]: d["ctc_cost"] for d in ctc_data}
     indirect_lookup = {d["project_id"]: d["indirect_cost"] for d in indirect_data}
+    indirect_lookup_exp = {d["project_id"]: d["indirect_cost"] for d in indirect_data_exp}
 
     final_data = []
 
@@ -164,7 +198,8 @@ def get_project_data(filters):
 
         ctc_cost = ctc_lookup.get(pid, 0.0)
         indirect_cost = indirect_lookup.get(pid, 0.0)
-        total_ctc = (ctc_cost + indirect_cost) * percentage
+        indirect_costs_exp_val = indirect_lookup_exp.get(pid, 0.0)
+        total_ctc = (ctc_cost + indirect_cost + indirect_costs_exp_val) * percentage
 
         actual = financial_lookup.get(pid, {}).get("actual_cost", 0.0) * percentage
         revenue = financial_lookup.get(pid, {}).get("revenue", 0.0) * percentage
