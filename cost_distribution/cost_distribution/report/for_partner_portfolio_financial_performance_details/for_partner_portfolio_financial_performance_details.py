@@ -336,7 +336,11 @@ def get_ctc_entries(params, project_ids, date_condition_ctc):
 
 def get_indirect_cost_entries(params, project_ids, date_condition):
     """Get indirect cost entries for the specified project and date range"""
-    
+
+    # ✅ إضافة فحص
+    if not project_ids:
+        return []
+        
     entries = frappe.db.sql(f"""
         SELECT
             gl.project,
@@ -371,7 +375,11 @@ def get_indirect_cost_entries(params, project_ids, date_condition):
 
 def get_indirect_cost_entries_exp(params, project_ids, date_condition):
     """Get indirect cost entries for the specified project and date range"""
-    
+
+    # ✅ إضافة فحص
+    if not project_ids:
+        return []
+        
     entries = frappe.db.sql(f"""
         SELECT
             gl.project,
