@@ -138,43 +138,46 @@ def get_project_data(filters):
         GROUP BY S.project
     """, {**params, "project_ids": project_ids}, as_dict=True)
 
-    indirect_data = frappe.db.sql(f"""
-        SELECT 
-            gl.project AS project_id,
-            SUM((gl.debit - gl.credit) * afc.currency) AS indirect_cost
-        FROM `tabAccounts For CTC` afc
-        JOIN `tabGL Entry` gl ON afc.account = gl.account
-        WHERE 
-            gl.project IN %(project_ids)s
-            AND afc.type = 'Indirect'
-            AND gl.docstatus = 1 
-            AND gl.is_cancelled = 0
-            AND gl.account LIKE %(acc)s
-            AND gl.remarks NOT REGEXP "Cost Distribution POP" AND gl.remarks NOT REGEXP "CAPITALIZATION"
-            {date_condition}
-        GROUP BY gl.project
-    """, {**params, "project_ids": projects_list_notexp}, as_dict=True)
+    indirect_data = []
+    if projects_list_notexp:
+        indirect_data = frappe.db.sql(f"""
+            SELECT 
+                gl.project AS project_id,
+                SUM((gl.debit - gl.credit) * afc.currency) AS indirect_cost
+            FROM `tabAccounts For CTC` afc
+            JOIN `tabGL Entry` gl ON afc.account = gl.account
+            WHERE 
+                gl.project IN %(project_ids)s
+                AND afc.type = 'Indirect'
+                AND gl.docstatus = 1 
+                AND gl.is_cancelled = 0
+                AND gl.account LIKE %(acc)s
+                AND gl.remarks NOT REGEXP "Cost Distribution POP" AND gl.remarks NOT REGEXP "CAPITALIZATION"
+                {date_condition}
+            GROUP BY gl.project
+        """, {**params, "project_ids": projects_list_notexp}, as_dict=True)
 
-
-    indirect_data_exp = frappe.db.sql(f"""
-        SELECT 
-            gl.project AS project_id,
-            SUM((gl.debit - gl.credit) * afc.currency) AS indirect_cost
-        FROM `tabAccount VS Year CTC` AS avyc
-        JOIN `tabAccounts For CTC` AS afc ON avyc.account_for_ctc = afc.account
-        JOIN `tabGL Entry` AS gl ON gl.account = afc.account
-        WHERE 
-            gl.project IN %(project_ids)s
-            AND avyc.parent = gl.project
-            AND afc.type = 'Indirect'
-            AND gl.docstatus = 1 
-            AND gl.is_cancelled = 0
-            AND YEAR(gl.posting_date) = avyc.year
-            AND gl.account LIKE %(acc)s
-            AND gl.remarks NOT REGEXP "Cost Distribution POP" AND gl.remarks NOT REGEXP "CAPITALIZATION"
-            {date_condition}
-        GROUP BY gl.project
-    """, {**params, "project_ids": projects_list_exp}, as_dict=True)
+    indirect_data_exp = []
+    if projects_list_exp:
+        indirect_data_exp = frappe.db.sql(f"""
+            SELECT 
+                gl.project AS project_id,
+                SUM((gl.debit - gl.credit) * afc.currency) AS indirect_cost
+            FROM `tabAccount VS Year CTC` AS avyc
+            JOIN `tabAccounts For CTC` AS afc ON avyc.account_for_ctc = afc.account
+            JOIN `tabGL Entry` AS gl ON gl.account = afc.account
+            WHERE 
+                gl.project IN %(project_ids)s
+                AND avyc.parent = gl.project
+                AND afc.type = 'Indirect'
+                AND gl.docstatus = 1 
+                AND gl.is_cancelled = 0
+                AND YEAR(gl.posting_date) = avyc.year
+                AND gl.account LIKE %(acc)s
+                AND gl.remarks NOT REGEXP "Cost Distribution POP" AND gl.remarks NOT REGEXP "CAPITALIZATION"
+                {date_condition}
+            GROUP BY gl.project
+        """, {**params, "project_ids": projects_list_exp}, as_dict=True)
 
 
     financial_lookup = {d["project_id"]: d for d in financial_data}
