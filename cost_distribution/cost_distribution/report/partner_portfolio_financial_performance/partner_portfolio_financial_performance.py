@@ -73,6 +73,17 @@ def get_project_data(filters):
     if not project_ids:
         return []
 
+    #update
+    projects_exp = frappe.db.sql("SELECT name FROM `tabProject Accounts For CTC`", as_list=True)
+    projects_list_exp_1 = [project[0] for project in projects_exp]
+
+    projects_list_notexp = list(
+        set(project_ids) - set(projects_list_exp_1)
+    )
+    projects_list_exp = list(
+        set(projects_list_exp_1) & set(project_ids)
+    )
+
     financial_data = frappe.db.sql("""
         SELECT 
             gl.project AS project_id,
@@ -125,7 +136,28 @@ def get_project_data(filters):
             AND gl.remarks NOT REGEXP "Cost Distribution POP" AND gl.remarks NOT REGEXP "CAPITALIZATION"
         GROUP BY gl.project, YEAR(gl.posting_date), MONTH(gl.posting_date)
         ORDER BY gl.project, YEAR(gl.posting_date), MONTH(gl.posting_date)
-    """, {"project_ids": project_ids, 'acc': '5%'}, as_dict=True)
+    """, {"project_ids": projects_list_notexp, 'acc': '5%'}, as_dict=True)
+
+    indirect_costs_exp = frappe.db.sql("""
+        SELECT 
+            gl.project AS project_id,
+            CONCAT(LPAD(MONTH(gl.posting_date), 2, '0'), '-', YEAR(gl.posting_date)) AS month_year,
+            SUM((gl.debit - gl.credit) * afc.currency) AS indirect_cost
+        FROM `tabAccount VS Year CTC` AS avyc
+        JOIN `tabAccounts For CTC` AS afc ON avyc.account_for_ctc = afc.account
+        JOIN `tabGL Entry` AS gl ON gl.account = afc.account 
+        WHERE 
+            gl.project IN %(project_ids)s 
+            AND avyc.parent = gl.project
+            AND afc.type = 'Indirect' 
+            AND gl.docstatus = 1 
+            AND gl.is_cancelled = 0 
+            AND YEAR(gl.posting_date) = avyc.year
+            AND gl.account LIKE %(acc)s
+            AND gl.remarks NOT REGEXP "Cost Distribution POP" AND gl.remarks NOT REGEXP "CAPITALIZATION"
+        GROUP BY gl.project, YEAR(gl.posting_date), MONTH(gl.posting_date)
+        ORDER BY gl.project, YEAR(gl.posting_date), MONTH(gl.posting_date)
+    """, {"project_ids": projects_list_exp, 'acc': '5%'}, as_dict=True)
 
     # تجميع كل المفاتيح لتوحيد العرض
     all_keys = set()
@@ -135,11 +167,14 @@ def get_project_data(filters):
         all_keys.add((d["project_id"], d["month_year"]))
     for d in indirect_costs:
         all_keys.add((d["project_id"], d["month_year"]))
+    for d in indirect_costs_exp:  
+        all_keys.add((d["project_id"], d["month_year"]))
 
     financial_lookup = {(d["project_id"], d["month_year"]): d for d in financial_data}
     ctc_lookup = {(d["project_id"], d["month_year"]): d["ctc_cost"] for d in ctc_data}
     indirect_lookup = {(d["project_id"], d["month_year"]): d["indirect_cost"] for d in indirect_costs}
-
+    indirect_lookup_exp = {(d["project_id"], d["month_year"]): d["indirect_cost"] for d in indirect_costs_exp}
+    
     result = OrderedDict()
 
     for key in sorted(all_keys):
@@ -149,7 +184,10 @@ def get_project_data(filters):
         financial_entry = financial_lookup.get(key, {})
         ctc_cost = ctc_lookup.get(key, 0.0)
         indirect_cost = indirect_lookup.get(key, 0.0)
-        total_ctc = ctc_cost + indirect_cost
+
+        indirect_costs_exp_val = indirect_lookup_exp.get(key, 0.0)
+        
+        total_ctc = ctc_cost + indirect_cost + indirect_costs_exp_val
 
         actual_cost = financial_entry.get("actual_cost", 0.0)
         revenue = financial_entry.get("revenue", 0.0)
