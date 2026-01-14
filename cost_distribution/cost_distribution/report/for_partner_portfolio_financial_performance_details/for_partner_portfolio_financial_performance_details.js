@@ -12,6 +12,7 @@ frappe.query_reports["For Partner Portfolio Financial Performance Details"] = {
                 const project_filter = frappe.query_report.get_filter("project");
                 if (project_filter) {
                     project_filter.set_value([]);
+                    frappe.query_report.refresh();
                 }
             }
         },
@@ -25,6 +26,7 @@ frappe.query_reports["For Partner Portfolio Financial Performance Details"] = {
                 const project_filter = frappe.query_report.get_filter("project");
                 if (project_filter) {
                     project_filter.set_value([]);
+                    frappe.query_report.refresh();
                 }
             }
         },
@@ -39,6 +41,7 @@ frappe.query_reports["For Partner Portfolio Financial Performance Details"] = {
                 const project_filter = frappe.query_report.get_filter("project");
                 if (project_filter) {
                     project_filter.set_value([]);
+                    frappe.query_report.refresh();
                 }
             }
         },
