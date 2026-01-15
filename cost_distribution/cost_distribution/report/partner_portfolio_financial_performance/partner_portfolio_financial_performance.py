@@ -296,9 +296,26 @@ def get_project_data(filters):
 
 @frappe.whitelist()
 def get_projects_by_partner(partner, txt="", project_type=None, portfolio_category=None):
+    # Handle case where filters might come as JSON strings
+    import json
+    
+    # Parse partner if it's a JSON string
+    if isinstance(partner, str) and partner.startswith('['):
+        try:
+            partner = json.loads(partner)[0] if json.loads(partner) else partner
+        except:
+            pass
+    
     # Handle multi-select project_type
     project_type_tuple = ()
     if project_type:
+        # Parse if JSON string
+        if isinstance(project_type, str) and project_type.startswith('['):
+            try:
+                project_type = json.loads(project_type)
+            except:
+                pass
+        
         if isinstance(project_type, str):
             project_type_list = [pt.strip() for pt in project_type.split(',') if pt.strip()]
         elif isinstance(project_type, list):
@@ -311,6 +328,13 @@ def get_projects_by_partner(partner, txt="", project_type=None, portfolio_catego
     # Handle multi-select portfolio_category
     portfolio_category_tuple = ()
     if portfolio_category:
+        # Parse if JSON string
+        if isinstance(portfolio_category, str) and portfolio_category.startswith('['):
+            try:
+                portfolio_category = json.loads(portfolio_category)
+            except:
+                pass
+        
         if isinstance(portfolio_category, str):
             portfolio_category_list = [pc.strip() for pc in portfolio_category.split(',') if pc.strip()]
         elif isinstance(portfolio_category, list):
@@ -347,9 +371,14 @@ def get_projects_by_partner(partner, txt="", project_type=None, portfolio_catego
             `tabProject` pro ON pro.name = pp.parent
         WHERE 
             {where_sql}
+        ORDER BY pp.parent
     """
 
-    results = frappe.db.sql(query, params, as_dict=True)
+    try:
+        results = frappe.db.sql(query, params, as_dict=True)
+    except Exception as e:
+        frappe.log_error(f"Error in get_projects_by_partner: {str(e)}", "Project Filter Error")
+        return []
 
     # إرجاع القائمة بصيغة MultiSelectList
     return [{"value": row.project, "description": row.project} for row in results]
