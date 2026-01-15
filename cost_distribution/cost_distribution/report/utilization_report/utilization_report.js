@@ -24,9 +24,10 @@ frappe.query_reports["Utilization Report"] = {
     {
       fieldname: "portfolio_type",
       label: "Portfolio Type",
-      fieldtype: "Link",
-      default: "New",
-      options: "Portfolio Category"
+      fieldtype: "MultiSelectList",
+      get_data: function(txt) {
+        return frappe.db.get_link_options('Portfolio Category', txt);
+      }
     },
     {
       fieldname: "employee_status",
@@ -69,6 +70,3 @@ frappe.query_reports["Utilization Report"] = {
     });
   }
 };
-
-
-
