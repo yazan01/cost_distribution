@@ -19,8 +19,10 @@ frappe.query_reports["Partner portfolio Financial Performance"] = {
         {
             "fieldname": "project_type",
             "label": ("Project Type"),
-            "fieldtype": "Link",
-            "options": "Project Type",
+            "fieldtype": "MultiSelectList",
+            "get_data": function(txt) {
+                return frappe.db.get_link_options('Project Type', txt);
+            },
             "on_change": function() {
                 // تفريغ فلتر المشاريع عند تغيير نوع المشروع
                 const project_filter = frappe.query_report.get_filter("project");
@@ -33,9 +35,10 @@ frappe.query_reports["Partner portfolio Financial Performance"] = {
         {
             "fieldname": "portfolio_category",
             "label": ("Portfolio Category"),
-            "fieldtype": "Link",
-            "options": "Portfolio Category",
-            "default": "New",
+            "fieldtype": "MultiSelectList",
+            "get_data": function(txt) {
+                return frappe.db.get_link_options('Portfolio Category', txt);
+            },
             "on_change": function() {
                 // تفريغ فلتر المشاريع عند تغيير فئة المحفظة
                 const project_filter = frappe.query_report.get_filter("project");
