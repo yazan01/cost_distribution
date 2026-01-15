@@ -14,6 +14,16 @@ frappe.query_reports["Partner portfolio Financial Performance"] = {
                     project_filter.set_value([]);
                     frappe.query_report.refresh();
                 }
+
+                const project_type_filter = frappe.query_report.get_filter("project_type");
+                if (project_type_filter) {
+                    project_type_filter.set_value([]);
+                }
+                
+                const portfolio_category_filter = frappe.query_report.get_filter("portfolio_category");
+                if (portfolio_category_filter) {
+                    portfolio_category_filter.set_value([]);
+                }
             }
         },
         {
