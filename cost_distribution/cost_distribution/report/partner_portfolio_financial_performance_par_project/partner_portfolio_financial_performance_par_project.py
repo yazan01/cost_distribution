@@ -29,6 +29,7 @@ def get_project_data(filters):
     from_date_filter = filters.get("from_date")
     to_date_filter = filters.get("to_date")
     aggregated_filter = filters.get("aggregated")
+    persentage = filters.get("persentage")
 
     if project_filter:
         if isinstance(project_filter, list):
@@ -74,7 +75,12 @@ def get_project_data(filters):
         WHERE {where_sql}
     """, params, as_dict=True)
 
-    project_percentages = {p["project_id"]: float(p["percentage"] or 0) / 100 for p in all_projects}
+    if persentage:
+        project_percentages = {p["project_id"]: float(p["percentage"] or 0) / 100 for p in all_projects}
+    else:
+        project_percentages = {p["project_id"]: float(100) / 100 for p in all_projects}
+    
+    # project_percentages = {p["project_id"]: float(p["percentage"] or 0) / 100 for p in all_projects}
     project_ids = list(project_percentages.keys())
 
     if not project_ids:
