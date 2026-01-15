@@ -19,8 +19,25 @@ def execute(filters=None):
         conditions += f" AND e.custom_supporting_services__consultant = '{unit}'"
     if employee_status:
         conditions += f" AND e.status = '{employee_status}'"
+    
+    # Handle multi-select portfolio_type filter
+    # Convert portfolio_types list to tuple for SQL IN clause; if None or empty, use empty tuple
     if portfolio_type:
-        conditions += f" AND p.custom_portfolio_category = '{portfolio_type}'"
+        if isinstance(portfolio_type, str):
+            # Convert comma-separated string to list
+            portfolio_types = tuple(pt.strip() for pt in portfolio_type.split(',') if pt.strip())
+        elif isinstance(portfolio_type, (list, tuple)):
+            portfolio_types = tuple(portfolio_type)
+        else:
+            portfolio_types = (portfolio_type,)
+        
+        if portfolio_types:
+            # Use parameterized query with tuple for SQL IN clause
+            placeholders = ', '.join(['%s'] * len(portfolio_types))
+            conditions += f" AND p.custom_portfolio_category IN ({placeholders})"
+    else:
+        portfolio_types = ()
+    
     if level:
         conditions += f" AND d.custom_level = '{level}'"
     if employment_type:
@@ -28,6 +45,13 @@ def execute(filters=None):
 
     # Exclude rows with NULL allocation type
     conditions += " AND p.custom_allocation_type IS NOT NULL"
+
+    # Prepare query parameters
+    query_params = []
+    
+    # Build the query with portfolio_types if provided
+    if portfolio_type and portfolio_types:
+        query_params.extend(portfolio_types)
 
     data = frappe.db.sql(f"""
         SELECT 
@@ -46,7 +70,7 @@ def execute(filters=None):
         LEFT JOIN `tabDesignation` d ON e.designation = d.name
         WHERE {conditions}
         GROUP BY ts.employee, e.employee_name
-    """, as_dict=True)
+    """, tuple(query_params) if query_params else (), as_dict=True)
 
     for row in data:
         total = row.total_hours or 0
