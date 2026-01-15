@@ -103,6 +103,12 @@ frappe.query_reports["Partner Portfolio Financial Performance Details"] = {
             "on_change": function() {
                 frappe.query_report.refresh();
             }
+        },
+        {
+            "fieldname": "persentage",
+            "label": ("Partner Percentage"),
+            "fieldtype": "Check",
+            "default": 1
         }
     ],
 
