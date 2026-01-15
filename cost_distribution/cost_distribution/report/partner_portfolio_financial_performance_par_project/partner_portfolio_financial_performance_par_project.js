@@ -33,8 +33,8 @@ frappe.query_reports["Partner Portfolio Financial Performance Par Project"] = {
         {
             "fieldname": "portfolio_category",
             "label": ("Portfolio Category"),
-            "fieldtype": "Select",
-            "options": "\nNew\nOld",
+            "fieldtype": "Link",
+            "options": "Portfolio Category",
             "default": "New",
             "on_change": function() {
                 // تفريغ فلتر المشاريع عند تغيير فئة المحفظة
