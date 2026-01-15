@@ -22,6 +22,7 @@ def get_project_data(filters):
     portfolio_category_filter = filters.get("portfolio_category")
     view_filter = filters.get("view")
     aggregated_filter = filters.get("aggregated")
+    persentage = filters.get("persentage")
     
     # Convert project_filter list to tuple for SQL IN clause; if None or empty, use empty tuple
     if project_filter:
