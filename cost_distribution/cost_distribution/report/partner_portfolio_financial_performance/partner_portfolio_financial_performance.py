@@ -33,15 +33,39 @@ def get_project_data(filters):
     else:
         project_filter_tuple = ()
 
+    # Handle multi-select project_type_filter
+    if project_type_filter:
+        if isinstance(project_type_filter, str):
+            project_type_list = [pt.strip() for pt in project_type_filter.split(',') if pt.strip()]
+        elif isinstance(project_type_filter, list):
+            project_type_list = project_type_filter
+        else:
+            project_type_list = [project_type_filter]
+        project_type_tuple = tuple(project_type_list) if project_type_list else ()
+    else:
+        project_type_tuple = ()
+
+    # Handle multi-select portfolio_category_filter
+    if portfolio_category_filter:
+        if isinstance(portfolio_category_filter, str):
+            portfolio_category_list = [pc.strip() for pc in portfolio_category_filter.split(',') if pc.strip()]
+        elif isinstance(portfolio_category_filter, list):
+            portfolio_category_list = portfolio_category_filter
+        else:
+            portfolio_category_list = [portfolio_category_filter]
+        portfolio_category_tuple = tuple(portfolio_category_list) if portfolio_category_list else ()
+    else:
+        portfolio_category_tuple = ()
+
     # Build where clauses dynamically
     where_clauses = ["pp.partner = %(partner_filter)s"]
 
     if project_filter_tuple:
         where_clauses.append("pp.parent IN %(project_filter)s")
-    if project_type_filter:
-        where_clauses.append("pro.project_type = %(project_type_filter)s")
-    if portfolio_category_filter:
-        where_clauses.append("pro.custom_portfolio_category = %(portfolio_category_filter)s")
+    if project_type_tuple:
+        where_clauses.append("pro.project_type IN %(project_type_filter)s")
+    if portfolio_category_tuple:
+        where_clauses.append("pro.custom_portfolio_category IN %(portfolio_category_filter)s")
 
     where_sql = " AND ".join(where_clauses)
 
@@ -60,8 +84,8 @@ def get_project_data(filters):
     params = {
         "partner_filter": partner_filter,
         "project_filter": project_filter_tuple,
-        "project_type_filter": project_type_filter,
-        "portfolio_category_filter": portfolio_category_filter
+        "project_type_filter": project_type_tuple,
+        "portfolio_category_filter": portfolio_category_tuple
     }
 
     all_projects = frappe.db.sql(query, params, as_dict=True)
@@ -272,13 +296,37 @@ def get_project_data(filters):
 
 @frappe.whitelist()
 def get_projects_by_partner(partner, txt="", project_type=None, portfolio_category=None):
+    # Handle multi-select project_type
+    if project_type:
+        if isinstance(project_type, str):
+            project_type_list = [pt.strip() for pt in project_type.split(',') if pt.strip()]
+        elif isinstance(project_type, list):
+            project_type_list = project_type
+        else:
+            project_type_list = [project_type]
+        project_type_tuple = tuple(project_type_list) if project_type_list else ()
+    else:
+        project_type_tuple = ()
+
+    # Handle multi-select portfolio_category
+    if portfolio_category:
+        if isinstance(portfolio_category, str):
+            portfolio_category_list = [pc.strip() for pc in portfolio_category.split(',') if pc.strip()]
+        elif isinstance(portfolio_category, list):
+            portfolio_category_list = portfolio_category
+        else:
+            portfolio_category_list = [portfolio_category]
+        portfolio_category_tuple = tuple(portfolio_category_list) if portfolio_category_list else ()
+    else:
+        portfolio_category_tuple = ()
+
     # نبني شروط WHERE ديناميكيًا
     where_clauses = ["pp.partner = %(partner)s"]
 
-    if project_type:
-        where_clauses.append("pro.project_type = %(project_type)s")
-    if portfolio_category:
-        where_clauses.append("pro.custom_portfolio_category = %(portfolio_category)s")
+    if project_type_tuple:
+        where_clauses.append("pro.project_type IN %(project_type)s")
+    if portfolio_category_tuple:
+        where_clauses.append("pro.custom_portfolio_category IN %(portfolio_category)s")
     if txt:
         where_clauses.append("pro.name LIKE %(txt)s")
 
@@ -297,8 +345,8 @@ def get_projects_by_partner(partner, txt="", project_type=None, portfolio_catego
 
     results = frappe.db.sql(query, {
         "partner": partner,
-        "project_type": project_type,
-        "portfolio_category": portfolio_category,
+        "project_type": project_type_tuple,
+        "portfolio_category": portfolio_category_tuple,
         "txt": f"%{txt}%" if txt else None
     }, as_dict=True)
 
