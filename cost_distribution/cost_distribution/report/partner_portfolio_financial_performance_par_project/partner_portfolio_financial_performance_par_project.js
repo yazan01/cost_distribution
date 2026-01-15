@@ -12,15 +12,30 @@ frappe.query_reports["Partner Portfolio Financial Performance Par Project"] = {
                 const project_filter = frappe.query_report.get_filter("project");
                 if (project_filter) {
                     project_filter.set_value([]);
-                    frappe.query_report.refresh();
                 }
+                
+                // تفريغ فلتر نوع المشروع عند تغيير البارتنر
+                const project_type_filter = frappe.query_report.get_filter("project_type");
+                if (project_type_filter) {
+                    project_type_filter.set_value([]);
+                }
+                
+                // تفريغ فلتر فئة المحفظة عند تغيير البارتنر
+                const portfolio_category_filter = frappe.query_report.get_filter("portfolio_category");
+                if (portfolio_category_filter) {
+                    portfolio_category_filter.set_value([]);
+                }
+                
+                frappe.query_report.refresh();
             }
         },
         {
             "fieldname": "project_type",
             "label": ("Project Type"),
-            "fieldtype": "Link",
-            "options": "Project Type",
+            "fieldtype": "MultiSelectList",
+            "get_data": function(txt) {
+                return frappe.db.get_link_options('Project Type', txt);
+            },
             "on_change": function() {
                 // تفريغ فلتر المشاريع عند تغيير نوع المشروع
                 const project_filter = frappe.query_report.get_filter("project");
@@ -33,9 +48,10 @@ frappe.query_reports["Partner Portfolio Financial Performance Par Project"] = {
         {
             "fieldname": "portfolio_category",
             "label": ("Portfolio Category"),
-            "fieldtype": "Link",
-            "options": "Portfolio Category",
-            "default": "New",
+            "fieldtype": "MultiSelectList",
+            "get_data": function(txt) {
+                return frappe.db.get_link_options('Portfolio Category', txt);
+            },
             "on_change": function() {
                 // تفريغ فلتر المشاريع عند تغيير فئة المحفظة
                 const project_filter = frappe.query_report.get_filter("project");
@@ -60,7 +76,7 @@ frappe.query_reports["Partner Portfolio Financial Performance Par Project"] = {
                 }
         
                 return frappe.call({
-                    method: "cost_distribution.cost_distribution.report.partner_portfolio_financial_performance.partner_portfolio_financial_performance.get_projects_by_partner",
+                    method: "cost_distribution.cost_distribution.report.partner_portfolio_financial_performance_par_project.partner_portfolio_financial_performance_par_project.get_projects_by_partner",
                     args: {
                         partner: partner,
                         txt: txt || "",
