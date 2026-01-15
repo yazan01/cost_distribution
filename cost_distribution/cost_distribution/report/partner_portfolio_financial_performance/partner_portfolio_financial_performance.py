@@ -65,9 +65,12 @@ def get_project_data(filters):
 
     all_projects = frappe.db.sql(query, params, as_dict=True)
 
-
+    if persentage:
+        project_percentages = {p["project_id"]: float(p["percentage"] or 0) / 100 for p in all_projects}
+    else:
+        project_percentages = {p["project_id"]: float(100) / 100 for p in all_projects}
     
-    project_percentages = {p["project_id"]: float(p["percentage"] or 0) / 100 for p in all_projects}
+    # project_percentages = {p["project_id"]: float(p["percentage"] or 0) / 100 for p in all_projects}
     project_ids = list(project_percentages.keys())
 
     if not project_ids:
