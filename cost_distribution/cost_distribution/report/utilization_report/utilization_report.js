@@ -26,7 +26,7 @@ frappe.query_reports["Utilization Report"] = {
       label: "Portfolio Type",
       fieldtype: "Select",
       default: "NEW",
-      options: "\nNEW\nOLD"
+      options: "\nAll\nNEW\nOLD"
     },
     {
       fieldname: "employee_status",
@@ -34,12 +34,6 @@ frappe.query_reports["Utilization Report"] = {
       fieldtype: "Select",
       default: "Active",
       options: "\nActive\nInactive\nSuspended\nLeft"
-    },
-    {
-      fieldname: "level",
-      label: "Level",
-      fieldtype: "Link",
-      options: "Levels"
     },
     {
       fieldname: "level",
@@ -75,3 +69,4 @@ frappe.query_reports["Utilization Report"] = {
     });
   }
 };
+
