@@ -297,6 +297,7 @@ def get_project_data(filters):
 @frappe.whitelist()
 def get_projects_by_partner(partner, txt="", project_type=None, portfolio_category=None):
     # Handle multi-select project_type
+    project_type_tuple = ()
     if project_type:
         if isinstance(project_type, str):
             project_type_list = [pt.strip() for pt in project_type.split(',') if pt.strip()]
@@ -304,11 +305,11 @@ def get_projects_by_partner(partner, txt="", project_type=None, portfolio_catego
             project_type_list = project_type
         else:
             project_type_list = [project_type]
-        project_type_tuple = tuple(project_type_list) if project_type_list else ()
-    else:
-        project_type_tuple = ()
+        if project_type_list:
+            project_type_tuple = tuple(project_type_list)
 
     # Handle multi-select portfolio_category
+    portfolio_category_tuple = ()
     if portfolio_category:
         if isinstance(portfolio_category, str):
             portfolio_category_list = [pc.strip() for pc in portfolio_category.split(',') if pc.strip()]
@@ -316,19 +317,24 @@ def get_projects_by_partner(partner, txt="", project_type=None, portfolio_catego
             portfolio_category_list = portfolio_category
         else:
             portfolio_category_list = [portfolio_category]
-        portfolio_category_tuple = tuple(portfolio_category_list) if portfolio_category_list else ()
-    else:
-        portfolio_category_tuple = ()
+        if portfolio_category_list:
+            portfolio_category_tuple = tuple(portfolio_category_list)
 
     # نبني شروط WHERE ديناميكيًا
     where_clauses = ["pp.partner = %(partner)s"]
+    params = {"partner": partner}
 
     if project_type_tuple:
         where_clauses.append("pro.project_type IN %(project_type)s")
+        params["project_type"] = project_type_tuple
+    
     if portfolio_category_tuple:
         where_clauses.append("pro.custom_portfolio_category IN %(portfolio_category)s")
+        params["portfolio_category"] = portfolio_category_tuple
+    
     if txt:
         where_clauses.append("pro.name LIKE %(txt)s")
+        params["txt"] = f"%{txt}%"
 
     where_sql = " AND ".join(where_clauses)
 
@@ -343,12 +349,7 @@ def get_projects_by_partner(partner, txt="", project_type=None, portfolio_catego
             {where_sql}
     """
 
-    results = frappe.db.sql(query, {
-        "partner": partner,
-        "project_type": project_type_tuple,
-        "portfolio_category": portfolio_category_tuple,
-        "txt": f"%{txt}%" if txt else None
-    }, as_dict=True)
+    results = frappe.db.sql(query, params, as_dict=True)
 
     # إرجاع القائمة بصيغة MultiSelectList
     return [{"value": row.project, "description": row.project} for row in results]
