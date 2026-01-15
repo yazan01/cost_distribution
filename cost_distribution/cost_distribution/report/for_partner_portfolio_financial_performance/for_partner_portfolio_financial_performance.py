@@ -1,15 +1,14 @@
 from collections import OrderedDict
 import frappe
 from frappe import _, _dict
+import json
 
 def execute(filters):
     columns = [
         {"label": "Period", "fieldname": "period", "fieldtype": "Data", "width": 120},
         {"label": "CTC Cost", "fieldname": "total_ctc", "fieldtype": "Float", "width": 200},
-        #{"label": "Actual Cost", "fieldname": "total_actual", "fieldtype": "Float", "width": 200},
         {"label": "Revenue", "fieldname": "total_revenue", "fieldtype": "Float", "width": 200},
         {"label": "Profit AND Loss on CTC Cost", "fieldname": "profit_loss_ctc", "fieldtype": "Float", "width": 240},
-        #{"label": "Profit AND Loss on Actual Cost", "fieldname": "profit_loss_actual", "fieldtype": "Float", "width": 240},
     ]
     data = get_project_data(filters)
     return columns, data
@@ -23,7 +22,6 @@ def get_project_data(filters):
     aggregated_filter = filters.get("aggregated")
     persentage = filters.get("persentage")
     
-    
     # Convert project_filter list to tuple for SQL IN clause; if None or empty, use empty tuple
     if project_filter:
         if isinstance(project_filter, list):
@@ -33,15 +31,57 @@ def get_project_data(filters):
     else:
         project_filter_tuple = ()
 
+    # Handle multi-select project_type
+    project_type_tuple = ()
+    if project_type_filter:
+        if isinstance(project_type_filter, str) and project_type_filter.startswith('['):
+            try:
+                project_type_filter = json.loads(project_type_filter)
+            except:
+                pass
+        
+        if isinstance(project_type_filter, str):
+            project_type_list = [pt.strip() for pt in project_type_filter.split(',') if pt.strip()]
+        elif isinstance(project_type_filter, list):
+            project_type_list = project_type_filter
+        else:
+            project_type_list = [project_type_filter]
+        if project_type_list:
+            project_type_tuple = tuple(project_type_list)
+
+    # Handle multi-select portfolio_category
+    portfolio_category_tuple = ()
+    if portfolio_category_filter:
+        if isinstance(portfolio_category_filter, str) and portfolio_category_filter.startswith('['):
+            try:
+                portfolio_category_filter = json.loads(portfolio_category_filter)
+            except:
+                pass
+        
+        if isinstance(portfolio_category_filter, str):
+            portfolio_category_list = [pc.strip() for pc in portfolio_category_filter.split(',') if pc.strip()]
+        elif isinstance(portfolio_category_filter, list):
+            portfolio_category_list = portfolio_category_filter
+        else:
+            portfolio_category_list = [portfolio_category_filter]
+        if portfolio_category_list:
+            portfolio_category_tuple = tuple(portfolio_category_list)
+
     # Build where clauses dynamically
     where_clauses = ["pp.partner = %(partner_filter)s"]
+    params = {"partner_filter": partner_filter}
 
     if project_filter_tuple:
         where_clauses.append("pp.parent IN %(project_filter)s")
-    if project_type_filter:
-        where_clauses.append("pro.project_type = %(project_type_filter)s")
-    if portfolio_category_filter:
-        where_clauses.append("pro.custom_portfolio_category = %(portfolio_category_filter)s")
+        params["project_filter"] = project_filter_tuple
+        
+    if project_type_tuple:
+        where_clauses.append("pro.project_type IN %(project_type_filter)s")
+        params["project_type_filter"] = project_type_tuple
+        
+    if portfolio_category_tuple:
+        where_clauses.append("pro.custom_portfolio_category IN %(portfolio_category_filter)s")
+        params["portfolio_category_filter"] = portfolio_category_tuple
 
     where_sql = " AND ".join(where_clauses)
 
@@ -57,20 +97,13 @@ def get_project_data(filters):
             {where_sql}
     """
 
-    params = {
-        "partner_filter": partner_filter,
-        "project_filter": project_filter_tuple,
-        "project_type_filter": project_type_filter,
-        "portfolio_category_filter": portfolio_category_filter
-    }
-
     all_projects = frappe.db.sql(query, params, as_dict=True)
-
 
     if persentage:
         project_percentages = {p["project_id"]: float(p["percentage"] or 0) / 100 for p in all_projects}
     else:
         project_percentages = {p["project_id"]: float(100) / 100 for p in all_projects}
+    
     project_ids = list(project_percentages.keys())
 
     if not project_ids:
@@ -143,24 +176,6 @@ def get_project_data(filters):
             ORDER BY gl.project, YEAR(gl.posting_date), MONTH(gl.posting_date)
         """, {"project_ids": projects_list_notexp, 'acc': '5%'}, as_dict=True)
 
-    # indirect_costs_exp = frappe.db.sql("""
-    #     SELECT 
-    #         gl.project AS project_id,
-    #         CONCAT(LPAD(MONTH(gl.posting_date), 2, '0'), '-', YEAR(gl.posting_date)) AS month_year,
-    #         SUM((gl.debit - gl.credit) * afc.currency) AS indirect_cost
-    #     FROM `tabAccounts For CTC` AS afc
-    #     JOIN `tabGL Entry` AS gl ON afc.account = gl.account 
-    #     WHERE 
-    #         gl.project IN %(project_ids)s 
-    #         AND afc.type = 'Indirect' 
-    #         AND gl.docstatus = 1 
-    #         AND gl.is_cancelled = 0 
-    #         AND gl.account LIKE %(acc)s
-    #         AND gl.remarks NOT REGEXP "Cost Distribution POP" AND gl.remarks NOT REGEXP "CAPITALIZATION"
-    #     GROUP BY gl.project, YEAR(gl.posting_date), MONTH(gl.posting_date)
-    #     ORDER BY gl.project, YEAR(gl.posting_date), MONTH(gl.posting_date)
-    # """, {"project_ids": projects_list_exp, 'acc': '5%'}, as_dict=True)
-
     indirect_costs_exp = []
     if projects_list_exp:
         indirect_costs_exp = frappe.db.sql("""
@@ -184,7 +199,6 @@ def get_project_data(filters):
             ORDER BY gl.project, YEAR(gl.posting_date), MONTH(gl.posting_date)
         """, {"project_ids": projects_list_exp, 'acc': '5%'}, as_dict=True)
 
-
     # تجميع كل المفاتيح لتوحيد العرض
     all_keys = set()
     for d in financial_data:
@@ -200,7 +214,7 @@ def get_project_data(filters):
     ctc_lookup = {(d["project_id"], d["month_year"]): d["ctc_cost"] for d in ctc_data}
     indirect_lookup = {(d["project_id"], d["month_year"]): d["indirect_cost"] for d in indirect_costs}
     indirect_lookup_exp = {(d["project_id"], d["month_year"]): d["indirect_cost"] for d in indirect_costs_exp}
-
+    
     result = OrderedDict()
 
     t_total_ctc = t_total_revenue = 0.0
@@ -304,15 +318,66 @@ def get_project_data(filters):
 
 @frappe.whitelist()
 def get_projects_by_partner(partner, txt="", project_type=None, portfolio_category=None):
-    # نبني شروط WHERE ديناميكيًا
-    where_clauses = ["pp.partner = %(partner)s"]
-
+    import json
+    
+    # Parse partner if it's a JSON string
+    if isinstance(partner, str) and partner.startswith('['):
+        try:
+            partner = json.loads(partner)[0] if json.loads(partner) else partner
+        except:
+            pass
+    
+    # Handle multi-select project_type
+    project_type_tuple = ()
     if project_type:
-        where_clauses.append("pro.project_type = %(project_type)s")
+        if isinstance(project_type, str) and project_type.startswith('['):
+            try:
+                project_type = json.loads(project_type)
+            except:
+                pass
+        
+        if isinstance(project_type, str):
+            project_type_list = [pt.strip() for pt in project_type.split(',') if pt.strip()]
+        elif isinstance(project_type, list):
+            project_type_list = project_type
+        else:
+            project_type_list = [project_type]
+        if project_type_list:
+            project_type_tuple = tuple(project_type_list)
+
+    # Handle multi-select portfolio_category
+    portfolio_category_tuple = ()
     if portfolio_category:
-        where_clauses.append("pro.custom_portfolio_category = %(portfolio_category)s")
+        if isinstance(portfolio_category, str) and portfolio_category.startswith('['):
+            try:
+                portfolio_category = json.loads(portfolio_category)
+            except:
+                pass
+        
+        if isinstance(portfolio_category, str):
+            portfolio_category_list = [pc.strip() for pc in portfolio_category.split(',') if pc.strip()]
+        elif isinstance(portfolio_category, list):
+            portfolio_category_list = portfolio_category
+        else:
+            portfolio_category_list = [portfolio_category]
+        if portfolio_category_list:
+            portfolio_category_tuple = tuple(portfolio_category_list)
+
+    # Build where clauses dynamically
+    where_clauses = ["pp.partner = %(partner)s"]
+    params = {"partner": partner}
+
+    if project_type_tuple:
+        where_clauses.append("pro.project_type IN %(project_type)s")
+        params["project_type"] = project_type_tuple
+    
+    if portfolio_category_tuple:
+        where_clauses.append("pro.custom_portfolio_category IN %(portfolio_category)s")
+        params["portfolio_category"] = portfolio_category_tuple
+    
     if txt:
         where_clauses.append("pro.name LIKE %(txt)s")
+        params["txt"] = f"%{txt}%"
 
     where_sql = " AND ".join(where_clauses)
 
@@ -325,16 +390,15 @@ def get_projects_by_partner(partner, txt="", project_type=None, portfolio_catego
             `tabProject` pro ON pro.name = pp.parent
         WHERE 
             {where_sql}
+        ORDER BY pp.parent
     """
 
-    results = frappe.db.sql(query, {
-        "partner": partner,
-        "project_type": project_type,
-        "portfolio_category": portfolio_category,
-        "txt": f"%{txt}%" if txt else None
-    }, as_dict=True)
+    try:
+        results = frappe.db.sql(query, params, as_dict=True)
+    except Exception as e:
+        frappe.log_error(f"Error in get_projects_by_partner: {str(e)}", "Project Filter Error")
+        return []
 
-    # إرجاع القائمة بصيغة MultiSelectList
     return [{"value": row.project, "description": row.project} for row in results]
 
 
